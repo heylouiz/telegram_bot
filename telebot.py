@@ -89,14 +89,14 @@ class Telebot:
         
     def sendTextMessage(self, message):
         try:
-            self.bot.sendMessage(chat_id=self.chat_id, text=unicode(message, 'utf-8'))
+            self.bot.sendMessage(chat_id=self.chat_id, text=message.encode('utf-8'))
         except Exception as e:
             print "sendText Error: " + str(e)
             self.bot.sendMessage(chat_id=self.chat_id, text='There was an error, I don\'t know what happened :(')
             
     def sendImageMessage(self, image_url):
         try:
-            self.bot.sendPhoto(chat_id=self.chat_id, photo=unicode(image_url, 'utf-8'))
+            self.bot.sendPhoto(chat_id=self.chat_id, photo=image_url.encode('utf-8'))
         except Exception as e:
             print "sendPhoto Error: " + str(e)
             self.sendTextMessage(message='Failed to get image, try again')
