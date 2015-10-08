@@ -6,11 +6,16 @@ import urllib2
 import simplejson
 import random
 from log_message import logMessage
+import collections
+import dota_handler
 
 class Telebot:
     def __init__(self, auth_token):
         self.last_update_id = 0
-        self.messagelog = []
+        self.messagelog = collections.deque(maxlen=20)
+        
+        # Create Dota handler
+        self.dota_handler = dota_handler.DotaHandler()
         
         # Create Telegram Bot using Authorization Token
         self.bot = telegram.Bot(auth_token)
@@ -41,8 +46,11 @@ class Telebot:
             for r in range(len(results["responseData"]["results"])):
                 image_results.append(results["responseData"]["results"][r]["url"])
     
-        # Send image
-        self.sendImageMessage(random.choice(image_results))
+	if len(image_results) == 0:
+            self.sendTextMessage(message='Could not find any images for ' + search_string.replace("%20", " "))
+        else:
+            # Send image
+            self.sendImageMessage(random.choice(image_results))
     
     def sed(self, message):
         message = message.replace("/replace", "")
@@ -71,17 +79,26 @@ class Telebot:
         output = fortune_out.communicate()[0]
         
         self.sendTextMessage(output)
+    
+    def dotaCommandHandler(self, message):
+        message = message.replace("/dota", "")
+        message = message.strip()
+        
+        # Handle the command and send the message to the user
+        self.sendTextMessage(self.dota_handler.handleCommands(message))
         
     def sendTextMessage(self, message):
         try:
-            self.bot.sendMessage(chat_id=self.chat_id, text=message)
-        except:
+            self.bot.sendMessage(chat_id=self.chat_id, text=unicode(message, 'utf-8'))
+        except Exception as e:
+            print "sendText Error: " + str(e)
             self.bot.sendMessage(chat_id=self.chat_id, text='There was an error, I don\'t know what happened :(')
             
     def sendImageMessage(self, image_url):
         try:
-            self.bot.sendPhoto(chat_id=self.chat_id, photo=image_url)
-        except:
+            self.bot.sendPhoto(chat_id=self.chat_id, photo=unicode(image_url, 'utf-8'))
+        except Exception as e:
+            print "sendPhoto Error: " + str(e)
             self.sendTextMessage(message='Failed to get image, try again')
             
     def informTyping(self):
@@ -96,7 +113,11 @@ class Telebot:
             # chat_id is required to reply any message
             self.chat_id = update.message.chat_id
             message = update.message.text.encode('utf-8')    
-    
+
+            # Remove mention from message
+            for mention in ["@quebot", "@Quebot"]:
+                message = message.replace(mention, "")
+
             if (message):
                 if message.find("/fortune") >= 0:
                     self.informTyping()
@@ -107,6 +128,9 @@ class Telebot:
                 elif message.find("/image") >= 0:
                     self.informSendingPhoto()
                     self.imageSearch(message)
+                elif message.find("/dota") >= 0:
+                    self.informTyping()
+                    self.dotaCommandHandler(message)
                 elif message.find("/test") >= 0:
                     self.informTyping()
                     self.sendTextMessage('Hello ' + update.message.from_user.first_name)
