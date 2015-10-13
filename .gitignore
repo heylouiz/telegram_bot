@@ -1,5 +1,5 @@
 .project
 .pydevproject
 *.pyc
-token.txt
+*token.txt
 *~

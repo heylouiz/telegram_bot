@@ -11,7 +11,7 @@ def main():
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     # Create telegram bot
-    bot = telebot.Telebot(open('token.txt', 'r').read().strip())
+    bot = telebot.Telebot(open('telegram_token.txt', 'r').read().strip())
 
     # Get user ip
     try:

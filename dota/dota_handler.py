@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 from dota2py import api as dota_api
+import os
 
 class DotaHandler:
     def __init__(self):
-        dota_api.set_api_key('287645A76E25E7EBDCB799D27EE1624C')
+        token_dir = str(os.path.dirname(os.path.abspath(__file__)))
+        dota_api.set_api_key(open(token_dir + '/steam_token.txt', 'r').read().strip())
         
     def getInfoFromOldMatches(self, acc_id, n_of_matches):
         response_info = ''
