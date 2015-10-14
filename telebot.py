@@ -193,9 +193,10 @@ class Telebot:
             # Remove mention from message
             # When the bot is in a group chat it can be invoked with /command@botname so
             # we remove this from the message
-            for mention in ["@quebot", "@Quebot"]:
-                message = message.replace(mention, "")
-
+            bot_username = self.bot.getMe()["username"]
+            for mention in [bot_username, bot_username.title()]:
+                message = message.replace('@' + mention, "")
+            
             if (message):
                 if message.find("/help") >= 0:
                     self.informTyping()
