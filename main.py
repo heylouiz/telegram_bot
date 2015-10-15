@@ -2,7 +2,7 @@
 
 import logging
 import telebot
-import urllib2
+import requests
 
 def main():
     global USER_IP
@@ -15,10 +15,10 @@ def main():
 
     # Get user ip
     try:
-        ip = urllib2.urlopen('http://ip.42.pl/short').read()
+        ip = requests.get('http://ip.42.pl/short').text.strip()
     except:
         ip = '192.168.1.13'
-        
+
     # Set ip used by bot
     bot.setIp(ip)
 
