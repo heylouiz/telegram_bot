@@ -133,7 +133,7 @@ class Telebot:
                       ' \'' + wow_str + '\' ' + doge_unique
             convert_out = subprocess.Popen(convert_cmd, stdout=subprocess.PIPE, shell=True).communicate()[0]
 
-        self.sendImage(open(doge_unique, 'rb'))
+        self.sendImage(image_file=open(doge_unique, 'rb'))
 
         os.remove(doge_unique)
 
@@ -228,7 +228,12 @@ class Telebot:
         message = message.strip()
 
         # Handle the command and send the message to the user
-        self.sendTextMessage(self.dota_handler.handleCommands(message))
+        (type_response, (response, caption)) = self.dota_handler.handleCommands(message)
+
+        if type_response == "text":
+            self.sendTextMessage(response)
+        elif type_response == "photo":
+            self.sendImage(image_file=response, caption_msg=caption)
 
     # Handle the command /help
     def help(self):
@@ -263,9 +268,9 @@ class Telebot:
             return -1
 
     # Send image from file
-    def sendImage(self, image_file):
+    def sendImage(self, image_file, caption_msg=""):
         try:
-            self.bot.sendPhoto(chat_id=self.chat_id, photo=image_file)
+            self.bot.sendPhoto(chat_id=self.chat_id, photo=image_file, caption=caption_msg)
         except Exception as e:
             print("sendPhoto Error: " + str(e))
             self.sendTextMessage(message='Failed to send image, try again')
