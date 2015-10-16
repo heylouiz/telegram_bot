@@ -198,27 +198,27 @@ class Telebot:
                 message = message.replace('@' + mention, "")
 
             if (message):
-                if message.find("/help") >= 0:
+                if message.startswith("/help"):
                     self.informTyping()
                     self.help()
-                elif message.find("/fortune") >= 0:
+                elif message.startswith("/fortune"):
                     self.informTyping()
                     self.fortune()
-                elif message.find("/replace") >= 0:
+                elif message.startswith("/replace"):
                     self.informTyping()
                     self.replace(message)
-                elif message.find("/image") >= 0:
+                elif message.startswith("/image"):
                     self.informSendingPhoto()
                     self.imageSearch(message)
-                elif message.find("/dota") >= 0:
+                elif message.startswith("/dota"):
                 # This command doesn't work with all nicknames, need to be reworked
-                    self.sendTextMessage('Command disabled')
-                #    self.informTyping()
-                #    self.dotaCommandHandler(message)
-                elif message.find("/doge") >= 0:
+                #    self.sendTextMessage('Command disabled')
+                    self.informTyping()
+                    self.dotaCommandHandler(message)
+                elif message.startswith("/doge"):
                     self.informSendingPhoto()
                     self.doge(message)
-                elif message.find("/test") >= 0:
+                elif message.startswith("/test"):
                     self.informTyping()
                     self.sendTextMessage('Hello ' + update.message.from_user.first_name)
                 else:

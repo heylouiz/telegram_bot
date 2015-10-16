@@ -37,11 +37,11 @@ class DotaHandler:
                 player_count = player_count + 1
 
             if player_team == 'radiant' and match_details["result"]["radiant_win"] == True:
-                victory = "win"
+                victory = "won"
             elif player_team == 'dire' and match_details["result"]["radiant_win"] == False:
-                victory  = "win"
+                victory  = "won"
             else:
-                victory = "loose"
+                victory = "lost"
             response_info = response_info + "Match id: " + str(match["match_id"]) + " - " + "Player " + victory + "!\n"
             match_count = match_count + 1
 
