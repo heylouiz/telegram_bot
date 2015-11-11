@@ -209,10 +209,13 @@ class DotaHandler:
     def dotaIdToSteamId(self, dota_id):
         return dota_id + 76561197960265728
 
-    def getLastMatch(self, account_id):
-        # Get last match
+    def getLastMatchId(self, account_id):
         last_match = dota_api.get_match_history(account_id=account_id)["result"]["matches"][0]
-        match_details = dota_api.get_match_details(last_match["match_id"])
+        return last_match["match_id"]
+
+    def getMatchInfo(self, match_id):
+        # Get match details
+        match_details = dota_api.get_match_details(match_id)
 
         players = []
 
@@ -243,7 +246,7 @@ class DotaHandler:
 
         drawer.winner = "Radiant" if match_details["result"]["radiant_win"] == True else "Dire"
 
-        drawer.match_id = last_match["match_id"]
+        drawer.match_id = match_id
 
         filename = drawer.drawMatchBoard()
 
@@ -251,11 +254,11 @@ class DotaHandler:
 
         os.remove(filename)
 
-        caption = "http://www.dotabuff.com/matches/" + str(last_match["match_id"])
+        caption = "http://www.dotabuff.com/matches/" + str(match_id)
 
         return [photo_file, caption]
 
-    def getInfoFromOldMatches(self, acc_id, n_of_matches, lastmatch):
+    def getInfoFromOldMatches(self, acc_id, n_of_matches):
         response_info = ''
 
         # Get a list of recent matches for the player
@@ -303,22 +306,29 @@ class DotaHandler:
         if len(args) != 2:
             return "Could not complete the dota command, wrong args. Usage: /dota nick number_of_matches\nor /dota lastmatch nick"
 
-        lastmatch = False
+        operation = ""
 
         if message.find("lastmatch") >= 0:
-            lastmatch = True
+            operation = "lastmatch"
             nick = args[1]
+        elif message.find("matchinfo") >= 0:
+            operation = "matchinfo"
+            match_id = args[1]
         else:
+            operation = "matchhistory"
             nick = args[0]
             n_of_matches = args[1]
 
         try:
-            # Get player account ID
-            account_id = int(dota_api.get_steam_id(nick)["response"]["steamid"])
+            if operation != "matchinfo":
+               # Get player account ID
+               account_id = int(dota_api.get_steam_id(nick)["response"]["steamid"])
         except:
             return "Failed to get steam id from " + nick
 
-        if lastmatch:
-            return ["photo", self.getLastMatch(account_id)]
-        else:
-            return ["text", self.getInfoFromOldMatches(account_id, int(n_of_matches), lastmatch)]
+        if operation == "lastmatch":
+            return ["photo", self.getMatchInfo(self.getLastMatchId(account_id))]
+        elif operation == "matchinfo":
+            return ["photo", self.getMatchInfo(match_id)]
+        elif operation == "matchhistory":
+            return ["text", [self.getInfoFromOldMatches(account_id, int(n_of_matches)), ""]]
