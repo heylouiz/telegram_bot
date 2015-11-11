@@ -55,9 +55,15 @@ class Telebot:
         else:
             # Send image
             img_to_send = random.choice(image_results)
-            if img_to_send == "":
-                img_to_send == image_results[0]
-            self.sendImageMessage(img_to_send)
+            timeout = 5
+            while self.sendImageMessage(img_to_send) != 0:
+                if timeout <= 0:
+                    self.sendTextMessage(message='Failed to get image, try again')
+                    break;
+                img_to_send = random.choice(image_results)
+                if img_to_send == "":
+                    img_to_send == image_results[0]
+                timeout -= 1
 
     # Handle the command /replace
     # This commmand replace a word in a previous message.
@@ -162,9 +168,10 @@ class Telebot:
     def sendImageMessage(self, image_url):
         try:
             self.bot.sendPhoto(chat_id=self.chat_id, photo=image_url)
+            return 0 # No error
         except Exception as e:
-            print("sendPhoto Error: " + str(e))
-            self.sendTextMessage(message='Failed to get image, try again')
+            print("sendPhoto Error: " + str(e) + "\nLink: " + str(image_url))
+            return -1
 
     # Send image from file
     def sendImage(self, image_file):
