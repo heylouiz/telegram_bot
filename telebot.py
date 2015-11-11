@@ -4,6 +4,7 @@ import telegram
 import subprocess
 import requests
 import json
+import qrcode
 import random
 from log_message import logMessage
 import collections
@@ -133,9 +134,25 @@ class Telebot:
     # don't check if the command exist.
     # To install in debian derivates use this command: sudo apt-get install fortune
     def fortune(self):
-        fortune_out = subprocess.Popen("fortune", stdout=subprocess.PIPE, shell=True)
+        fortune_out = subprocess.Popen("fortune -a", stdout=subprocess.PIPE, shell=True)
         output = fortune_out.communicate()[0]
         self.sendTextMessage(output.decode("utf-8"))
+
+    # Handle the command /qrcode
+    # This command generate a qrcode with a given text and send the image to the user
+    # Needs qrcode library
+    # To install with pip use the command: sudo pip qrcode oinstall
+    def qrcode(self, message):
+        message = message.replace("/qrcode", "")
+        message = message.strip()
+
+        img = qrcode.make(message)
+        qrcode_unique = 'qrcode' + str(calendar.timegm(time.gmtime())) + '.jpg'
+
+        img.save(qrcode_unique)
+
+        self.sendImage(image_file=open(qrcode_unique, 'rb'))
+        os.remove(qrcode_unique)
 
     # Handle the command /dota
     def dotaCommandHandler(self, message):
@@ -152,7 +169,11 @@ class Telebot:
         '/fortune - Print a fortune message.\n - Usage: /fortune\n' +\
         '/image   - Get a image from Google Images.\n - Usage: /image word\n' +\
         '/doge    - Get a doge image meme with custom phrases.\n - Usage: /doge phrase1, phrase2, phrase3...\n' +\
-        '/dota    - Get the last N matches played by a player in dota.\n - Usage: /dota nickname N\n'
+        '/qrcode  - Get a qrcode from given text.\n - Usage: /qrcode text to qrcode\n' +\
+        'Dota commands:\n' +\
+        '/dota    - Get the last N matches played by a player in dota.\n - Usage: /dota nickname N\n' +\
+        '/dota    - Get info from the player\'s last match\n - Usage: /dota lastmatch nickname\n' +\
+        '/dota    - Get info from match\b - Usage: /dota matchinfo MATCHID\n'
 
         self.sendTextMessage(help_message)
 
@@ -211,6 +232,9 @@ class Telebot:
                 elif message.startswith("/fortune"):
                     self.informTyping()
                     self.fortune()
+                elif message.startswith("/qrcode"):
+                    self.informSendingPhoto()
+                    self.qrcode(message)
                 elif message.startswith("/replace"):
                     self.informTyping()
                     self.replace(message)
