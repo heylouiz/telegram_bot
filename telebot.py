@@ -13,6 +13,9 @@ import shutil
 import calendar
 import time
 import os
+from xml.etree.ElementTree import Element, tostring
+from hashlib import md5
+from urllib.parse import urlencode
 
 class Telebot:
     def __init__(self, auth_token):
@@ -160,6 +163,65 @@ class Telebot:
         self.sendImage(image_file=open(qrcode_unique, 'rb'))
         os.remove(qrcode_unique)
 
+    # Handle the command /speak
+    def speak(self, message):  # TODO(heylouiz): Rewrite this command as a module
+        message = message.replace("/speak", "")
+        message = message.strip()
+
+        lang_arg = message.split(" ")[0]
+
+        if lang_arg == "en":
+            message = message.replace("en", "", 1).strip() # Remove lang arg from message
+            engine = 4
+            voice = 5 # Daniel
+            lang = 1
+        else: # default is pt-br
+            engine = 2
+            voice = 5 # Felipe
+            lang = 6
+
+        BASE_URL = 'http://cache-a.oddcast.com/c_fs/'
+
+        def xml_elem_str(name, text):
+            el = Element(name)
+            el.text = text
+            return tostring(el)
+
+        def tts_url(text, engine=None, lang=None, voice=None):
+
+            prologue = b''.join(xml_elem_str(n, t) for n, t in (
+                ('engineID', str(engine)),
+                ('voiceID',  str(voice)),
+                ('langID',   str(lang)),
+                ('ext', 'mp3'),
+            ))
+
+            hash = md5(prologue + text.encode()).hexdigest()
+
+            url = BASE_URL + hash + '.' + 'mp3' + '?' + urlencode({
+                'engine': engine,
+                'language': lang,
+                'voice': voice,
+                'useUTF8': 1,  # is this needed?
+                'text': text,
+            })
+
+            return url
+
+        speak_unique = 'speak' + str(calendar.timegm(time.gmtime())) + '.mp3'
+
+        url = tts_url(text=message, engine=engine, lang=lang, voice=voice)
+
+        r_file = requests.get(url)
+
+        with open(speak_unique, 'wb') as speak_file:
+            speak_file.write(r_file.content)
+
+        result = self.sendVoice(voice_file=open(speak_unique, 'rb'))
+
+        if (result == 0): # No error
+            os.remove(speak_unique)
+
     # Handle the command /dota
     def dotaCommandHandler(self, message):
         message = message.replace("/dota", "")
@@ -208,6 +270,16 @@ class Telebot:
             print("sendPhoto Error: " + str(e))
             self.sendTextMessage(message='Failed to send image, try again')
 
+    # Send voice from file
+    def sendVoice(self, voice_file):
+        try:
+            self.bot.sendVoice(chat_id=self.chat_id, voice=voice_file)
+            return 0
+        except Exception as e:
+            print("sendVoice Error: " + str(e))
+            self.sendTextMessage(message='Failed to speak, try again')
+            return -1
+
     # Feedback to user informing that the bot will send a text message
     def informTyping(self):
         self.bot.sendChatAction(chat_id=self.chat_id, action=telegram.ChatAction.TYPING)
@@ -215,6 +287,10 @@ class Telebot:
     # Feedback to user informing that the bot will send a photo
     def informSendingPhoto(self):
         self.bot.sendChatAction(chat_id=self.chat_id, action=telegram.ChatAction.UPLOAD_PHOTO)
+
+    # Feedback to user informing that the bot will send an audio
+    def informSendingAudio(self):
+        self.bot.sendChatAction(chat_id=self.chat_id, action=telegram.ChatAction.UPLOAD_AUDIO)
 
     # Handle all messages received by the bot
     def handleMessages(self):
@@ -249,12 +325,14 @@ class Telebot:
                     self.imageSearch(message)
                 elif message.startswith("/dota"):
                 # This command doesn't work with all nicknames, need to be reworked
-                #    self.sendTextMessage('Command disabled')
                     self.informTyping()
                     self.dotaCommandHandler(message)
                 elif message.startswith("/doge"):
                     self.informSendingPhoto()
                     self.doge(message)
+                elif message.startswith("/speak"):
+                    self.informSendingAudio()
+                    self.speak(message)
                 elif message.startswith("/test"):
                     self.informTyping()
                     self.sendTextMessage('Hello ' + update.message.from_user.first_name)
