@@ -17,7 +17,7 @@ import os
 class Telebot:
     def __init__(self, auth_token):
         self.last_update_id = 0
-        self.messagelog = collections.deque(maxlen=20)
+        self.messagelog = collections.deque(maxlen=100)
 
         # Create Dota handler
         self.dota_handler = dota_handler.DotaHandler()
@@ -73,7 +73,7 @@ class Telebot:
     # Hey John FTFY:\n Hello friend
     # The bot must be with privacy mode disabled to listen to all messages (Talk to @BotFather)
     #
-    def replace(self, message):
+    def replace(self, message, chat_id, message_id):
         message = message.replace("/replace", "")
         message = message.strip()
 
@@ -81,19 +81,25 @@ class Telebot:
 
         message_splited = message.split("/")
 
-        if len(message_splited) > 2:
+        if len(message_splited) != 2:
             self.sendTextMessage("Could not perform the replace command\n Usage: /replace wrongword/correctword")
             return
 
         old = message_splited[0]
         new = message_splited[1]
 
+        found = 0
         for logmsg in reversed(self.messagelog):
-            if logmsg.getMessage().find(old) >= 0:
+            if logmsg.message.find(old) >= 0:
+                if chat_id == logmsg.chat_id:
+                    # Send message
+                    reply_message = logmsg.message.replace(old, new)
+                    self.sendTextMessage(message=reply_message, reply_to=logmsg.message_id)
+                    found = 1
+                    break
 
-                # Send message
-                reply_message = logmsg.getMessage().replace(old, new)
-                self.sendTextMessage('Hey ' + logmsg.getUsername() + ' FTFY:\n' + reply_message)
+        if found == 0:
+            self.sendTextMessage(message="Could not find \"" + old + "\"", reply_to=message_id)
 
     # Handle the command /doge
     # This command sends a doge meme with customized phrases
@@ -178,9 +184,9 @@ class Telebot:
         self.sendTextMessage(help_message)
 
     # Send text message
-    def sendTextMessage(self, message):
+    def sendTextMessage(self, message='', reply_to=None):
         try:
-            self.bot.sendMessage(chat_id=self.chat_id, text=message)
+            self.bot.sendMessage(chat_id=self.chat_id, text=message, reply_to_message_id=reply_to)
         except Exception as e:
             print("sendText Error: " + str(e))
             self.bot.sendMessage(chat_id=self.chat_id, text='There was an error, I don\'t know what happened :(')
@@ -237,7 +243,7 @@ class Telebot:
                     self.qrcode(message)
                 elif message.startswith("/replace"):
                     self.informTyping()
-                    self.replace(message)
+                    self.replace(message, update.message.chat_id, update.message.message_id)
                 elif message.startswith("/image"):
                     self.informSendingPhoto()
                     self.imageSearch(message)
@@ -253,7 +259,7 @@ class Telebot:
                     self.informTyping()
                     self.sendTextMessage('Hello ' + update.message.from_user.first_name)
                 else:
-                    self.messagelog.append(logMessage(update.message.from_user.first_name, message))
+                    self.messagelog.append(logMessage(update.message.chat_id, update.message.message_id, message))
 
                 # Updates global offset to get the new updates
                 self.last_update_id = update.update_id + 1
