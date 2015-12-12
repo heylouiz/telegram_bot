@@ -130,7 +130,7 @@ class Telebot:
     # Reference to doge meme: knowyourmeme.com/memes/doge
     # You must have the imagemagick program in your linux system, the program
     # don't check if the command exist.
-    # To install in debian derivates use this command: sudo apt-get install fortune
+    # To install in debian derivates use this command: sudo apt-get install imagemagick
     def doge(self, message):
         message = message.replace("/doge", "")
         message = message.strip()
@@ -287,6 +287,7 @@ class Telebot:
 
     # Send text message
     def sendTextMessage(self, message='', reply_to=None):
+        print("SendTextMessage")
         try:
             self.bot.sendMessage(chat_id=self.chat_id, text=message, reply_to_message_id=reply_to)
         except Exception as e:
@@ -295,6 +296,7 @@ class Telebot:
 
     # Send image from url
     def sendImageMessage(self, image_url):
+        print("SendImageMessage")
         try:
             self.bot.sendPhoto(chat_id=self.chat_id, photo=image_url)
             return 0 # No error
@@ -304,6 +306,7 @@ class Telebot:
 
     # Send image from file
     def sendImage(self, image_file, caption_msg=""):
+        print("SendImage")
         try:
             self.bot.sendPhoto(chat_id=self.chat_id, photo=image_file, caption=caption_msg)
         except Exception as e:
@@ -312,6 +315,7 @@ class Telebot:
 
     # Send voice from file
     def sendVoice(self, voice_file):
+        print("SendVoice")
         try:
             self.bot.sendVoice(chat_id=self.chat_id, voice=voice_file)
             return 0
@@ -340,6 +344,11 @@ class Telebot:
             self.chat_id = update.message.chat_id
             message = update.message.text
 
+            # Clear bot requests TODO(heylouiz) use a parameter to do this
+            #print(message)
+            #self.last_update_id = update.update_id + 1
+            #continue
+
             # Remove mention from message
             # When the bot is in a group chat it can be invoked with /command@botname so
             # we remove this from the message
@@ -359,7 +368,8 @@ class Telebot:
                     self.qrcode(message)
                 elif message.startswith("/replace"):
                     self.informTyping()
-                    self.replace(message, update.message.chat_id, update.message.message_id)
+                    self.sendTextMessage("Command disabled, the bot is now in privacy mode.")
+                    #self.replace(message, update.message.chat_id, update.message.message_id)
                 elif message.startswith("/image"):
                     self.informSendingPhoto()
                     self.imageSearch(message)
@@ -378,6 +388,9 @@ class Telebot:
                     self.sendTextMessage('Hello ' + update.message.from_user.first_name)
                 else:
                     self.messagelog.append(logMessage(update.message.chat_id, update.message.message_id, message))
+
+                # Wait 0.35 seconds to prevent hitting the request limit of telegram API
+                time.sleep(0.35)
 
                 # Updates global offset to get the new updates
                 self.last_update_id = update.update_id + 1
