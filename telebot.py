@@ -25,6 +25,9 @@ class Telebot:
         # Create Dota handler
         self.dota_handler = dota_handler.DotaHandler()
 
+        # Bing key
+        self.bing_key = open('bing_key.txt', 'r').read().strip()
+
         # Create Telegram Bot using Authorization Token
         self.bot = telegram.Bot(auth_token)
 
@@ -43,29 +46,47 @@ class Telebot:
         message = message.replace("/image", "")
         message = message.strip()
 
-        search_string = message.replace(" ", "%20")
+        best = False
+
+        if message.find("-best") >= 0:
+            message = message.replace("-best", "")
+            best = True
+
+        search_string = message.strip()
+        print(search_string)
         image_results = []
 
-        for page in ['0', '4', '8']:
-            url = ('https://ajax.googleapis.com/ajax/services/search/images?'
-                  'v=1.0&q=' + search_string + '&page=' + page + '&userip=' + self.ip + '&safe=active')
-            r = requests.get(url)
-            results = r.json()
-            for r in range(len(results["responseData"]["results"])):
-                image_results.append(results["responseData"]["results"][r]["url"])
+        url = 'https://api.datamarket.azure.com/Bing/Search/Image?' +\
+              'Query=\'' + search_string + '\'&Adult=\'Moderate\'&Market=\'pt-BR\'&$format=json'
+        r = requests.get(url, auth=(self.bing_key, self.bing_key))
+        results = r.json()
+        for r in results["d"]["results"]:
+            image_results.append(r["MediaUrl"])
 
         if len(image_results) == 0:
             self.sendTextMessage(message='Could not find any images for ' + search_string.replace("%20", " "))
         else:
+            # Use only the first 10 results
+            image_results = image_results[0:10]
+
             # Send image
-            img_to_send = random.choice(image_results)
+            if best:
+                best_count = 0
+                img_to_send = image_results[best_count]
+            else:
+                img_to_send = random.choice(image_results)
+
             timeout = 5
             while self.sendImageMessage(img_to_send) != 0:
                 if timeout <= 0:
                     self.sendTextMessage(message='Failed to get image, try again')
                     break;
-                img_to_send = random.choice(image_results)
-                if img_to_send == "":
+                if best:
+                    best_count += 1
+                    img_to_send = image_results[best_count]
+                else:
+                    img_to_send = random.choice(image_results)
+                if img_to_send == "":  # This should never happen
                     img_to_send == image_results[0]
                 timeout -= 1
 
