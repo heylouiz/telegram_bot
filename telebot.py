@@ -163,10 +163,24 @@ class Telebot:
     # You must have this program in order to use this bot command, the program
     # don't check if the command exist.
     # To install in debian derivates use this command: sudo apt-get install fortune
-    def fortune(self):
-        fortune_out = subprocess.Popen("fortune -a", stdout=subprocess.PIPE, shell=True)
+    def fortune(self, message):
+
+        database = "-a"
+        lang = "en "
+
+        if message.find("-pt") > 0:
+            database = "/usr/share/games/fortunes/brasil"
+            lang = ""
+
+        fortune_out = subprocess.Popen("fortune " + database, stdout=subprocess.PIPE, shell=True)
         output = fortune_out.communicate()[0]
-        self.sendTextMessage(output.decode("utf-8"))
+
+        fortune_message = output.decode("utf-8")
+
+        if message.find("-speak") > 0:
+            self.speak(lang + fortune_message)
+        else:
+            self.sendTextMessage(fortune_message)
 
     # Handle the command /qrcode
     # This command generate a qrcode with a given text and send the image to the user
@@ -339,7 +353,7 @@ class Telebot:
                     self.help()
                 elif message.startswith("/fortune"):
                     self.informTyping()
-                    self.fortune()
+                    self.fortune(message)
                 elif message.startswith("/qrcode"):
                     self.informSendingPhoto()
                     self.qrcode(message)
