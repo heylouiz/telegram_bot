@@ -14,7 +14,7 @@ def help_command():
 @run_async
 def doge_command(bot, update):
     message = update.message.text
-    message = message.replace("/doge", "").strip()
+    message = message.split(' ', 1)[1].strip()
 
     if message.find("-help") >= 0:
         bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.TYPING)

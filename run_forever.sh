@@ -4,6 +4,6 @@
 # the script will relaunch it
 RC=1
 while [ $RC -ne 0 ]; do
-   python3 main.py
+   python3 telebot.py
    RC=$?
 done
