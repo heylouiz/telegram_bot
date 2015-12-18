@@ -2,5 +2,5 @@
 .pydevproject
 *.pyc
 *token.txt
-bing_key.txt
+*bing_key.py
 *~
