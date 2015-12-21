@@ -38,14 +38,27 @@ def image_command(bot, update):
         message = message.replace("-best", "")
         best = True
 
+    if message.find("-nsfw") >= 0:
+        message = message.replace("-nsfw", "")
+        adult="Off"
+    else:
+        adult="Moderate"
+
     search_string = message.strip()
 
     image_results = []
 
     url = 'https://api.datamarket.azure.com/Bing/Search/Image?' +\
-          'Query=\'' + search_string + '\'&Adult=\'Moderate\'&Market=\'pt-BR\'&$format=json'
-    r = requests.get(url, auth=(bing_key.keys[0], bing_key.keys[0]))
+          'Query=\'' + search_string + '\'&Adult=\'' + adult + '\'&Market=\'pt-BR\'&$format=json'
+    r = requests.get(url, auth=(bing_key.keys[1], bing_key.keys[1]))
+
+    if r.status_code != 200:
+        bot.sendMessage(chat_id=update.message.chat_id, text='Failed to get image.\nServer error, try again later.')
+        print(r.text)
+        return
+
     results = r.json()
+
     for r in results["d"]["results"]:
         image_results.append(r["MediaUrl"])
 

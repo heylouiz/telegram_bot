@@ -38,8 +38,8 @@ def tts_url(text, engine=None, lang=None, voice=None):
 
 def help_command():
     return '/speak - Make the bot speak.\n- Usage: /speak text\n' +\
-           'By default the bot speaks portuguese, use the parameter "-en"' +\
-           'to make it speak in english.\n- Usage: /speak -en text'
+           'By default the bot speaks portuguese, use the parameter "-en" ' +\
+           'to make it speak in english.\n- Usage: /speak -en text\n'
 
 @run_async
 def speak_command(bot, update):

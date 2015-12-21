@@ -5,17 +5,14 @@ from telegram.dispatcher import run_async
 from time import sleep
 import logging
 import sys
+import importlib
+from enabled_modules import enabled_modules
 
-sys.path.insert(0, 'modules/image')
-sys.path.insert(0, 'modules/qr_code')
-sys.path.insert(0, 'modules/doge')
-sys.path.insert(0, 'modules/fortune')
-sys.path.insert(0, 'modules/speak')
-import image
-import qr_code
-import doge
-import fortune
-import speak
+# Dinamically import enabled modules, edit file enabled_modules.py
+bot_modules = {}
+for module_name in enabled_modules:
+    sys.path.insert(0, 'modules/' + module_name)
+    bot_modules[module_name] = importlib.import_module(module_name)
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -27,18 +24,27 @@ formatter = \
 ch.setFormatter(formatter)
 root.addHandler(ch)
 
-last_chat_id = 0
-
 logger = logging.getLogger(__name__)
 
 def help_command(bot, update):
-    help_message = 'Help:\n\n' + image.help_command() + '\n'+ doge.help_command() + '\n'+ fortune.help_command() +\
-                   '\n'+ qr_code.help_command() + '\n'+ speak.help_command()
+    help_message = "Help:\n\n"
+
+    for module_name, module in bot_modules.items():
+        help_message += getattr(module, "help_command")()
 
     bot.sendMessage(chat_id=update.message.chat_id, text=help_message)
 
 def test_command(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id, text="Hello")
+
+def any_message(bot, update):
+    """ Print to console """
+
+    # Save last chat_id to use in reply handler
+    logger.info("New message\nFrom: %s\nchat_id: %d\nText: %s" %
+                (update.message.from_user,
+                 update.message.chat_id,
+                 update.message.text))
 
 def error(bot, update, error):
     """ Print error to console """
@@ -47,19 +53,20 @@ def error(bot, update, error):
 def main():
     # Create the EventHandler and pass it your bot's token.
     token = open('telegram_token.txt', 'r').read().strip()
-    updater = Updater(token, workers=2)
+    updater = Updater(token, workers=10)
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
 
+    # Commands
     dp.addTelegramCommandHandler("test", test_command)
-    dp.addTelegramCommandHandler("image", image.image_command)
-    dp.addTelegramCommandHandler("doge", doge.doge_command)
-    dp.addTelegramCommandHandler("fortune", fortune.fortune_command)
-    dp.addTelegramCommandHandler("qrcode", qr_code.qrcode_command)
-    dp.addTelegramCommandHandler("speak", speak.speak_command)
     dp.addTelegramCommandHandler("help", help_command)
 
+    for module_name, module in bot_modules.items():
+        dp.addTelegramCommandHandler(module_name, getattr(module, module_name + "_command"))
+        dp.addTelegramRegexHandler('^/' + module_name, any_message) # Handler to log requests
+
+    # Other handlers
     dp.addErrorHandler(error)
 
     # Start the Bot and store the update Queue, so we can insert updates

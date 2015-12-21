@@ -9,7 +9,7 @@ def help_command():
     return '/qrcode  - Get a qrcode from given text.\n - Usage: /qrcode text to qrcode\n'
 
 @run_async
-def qrcode_command(bot, update):
+def qr_code_command(bot, update):
     message = update.message.text
     message = message.split(' ', 1)[1].strip()
 

@@ -20,8 +20,7 @@ def fortune_command(bot, update):
 
     database = "-a"
     lang = "en "
-    print(message)
-    if message.find("-pt") > 0:
+    if message.find("-pt") >= 0:
         database = "/usr/share/games/fortunes/brasil"
         lang = ""
 
