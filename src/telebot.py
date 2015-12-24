@@ -2,7 +2,6 @@
 
 from telegram import Updater
 from telegram.dispatcher import run_async
-from time import sleep
 import logging
 import sys
 import importlib
@@ -63,7 +62,10 @@ def main():
     dp.addTelegramCommandHandler("help", help_command)
 
     for module_name, module in bot_modules.items():
-        dp.addTelegramCommandHandler(module_name, getattr(module, module_name + "_command"))
+        # If the name of the module has a "_" in the name, the command should be his name without the "_".
+        # Eg: module name: qr_code
+        #     command: qrcode
+        dp.addTelegramCommandHandler(module_name.replace("_", ""), getattr(module, module_name + "_command"))
         dp.addTelegramRegexHandler('^/' + module_name, any_message) # Handler to log requests
 
     # Other handlers
