@@ -11,7 +11,9 @@ BASE_URL = "http://107.170.7.193:2678/api/v1/tts/"
 def help_command():
     return '/speak - Make the bot speak.\n- Usage: /speak text\n' +\
            'By default the bot speaks portuguese, use the parameter "-en" ' +\
-           'to make it speak in english.\n- Usage: /speak -en text\n'
+           'to make it speak in english.\n- Usage: /speak -en text.\n' +\
+           'You can change the gender of the bot using "-w", this will produce a female voice. ' +\
+           'This works both in english (-en) and portuguese.\n-Usage: /speak -w text.\n'
 
 @run_async
 def speak_command(bot, update, **kwargs):
@@ -41,6 +43,14 @@ def speak_command(bot, update, **kwargs):
 
     if "-pt" in kwargs["args"]:
         message = message.replace("-pt", "").strip()
+
+    if "-w" in kwargs["args"]:
+        message = message.replace("-w", "").strip()
+        if "-en" in kwargs["args"]:
+            engine = "3"
+            voice = "6" # Ashley
+        else:
+            voice = "4" # Fernanda
 
     # Remove "/speak" from the message
     message = message.split(" ", 1)
