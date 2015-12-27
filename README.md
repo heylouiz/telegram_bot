@@ -1,32 +1,26 @@
 # telegram_bot
 
-A Telegram bot with a variety of commands
+A Telegram bot written in Python with a variety of commands.
+Note: Only works in Python 3!
 
-This bot uses the "Python Telegram Bot", you need to install it to make the bot work.
-Link to the project:
-https://github.com/leandrotoledo/python-telegram-bot
+Dependencies
 
-Other requirements:
+Python Telegram Bot (https://github.com/python-telegram-bot/python-telegram-bot):
+To install in Debian based distributions:
+sudo pip3 install python-telegram-bot
+
 Fortune (http://linux.die.net/man/6/fortune):
+To install in Debian based distributions:
 sudo apt-get install fortune
 
-Imagemagick (http://www.imagemagick.org):
-sudo apt-get install imagemagick
-
-dota2py (https://github.com/andrewsnowden/dota2py):
-pip3 install dota2py
-
-requests (http://docs.python-requests.org/en/latest/)
-pip3 install requests
+requests (http://docs.python-requests.org/en/latest/):
+sudo pip3 install requests
 
 Before you can start the bot you need to create a telegram bot and get a token, check the oficial documentation here:
 https://core.telegram.org/bots
 
-This project uses a command to get the match history of a Dota 2 Player (not working correctly) and needs a Steam API Key, you can get one here:
-http://steamcommunity.com/dev/apikey
-
 After all the requirements are installed you can run the bot using the command:
-python3 main.py
+python3 telebot.py
 
 Theres a script to keep the bot running "forever", you can run it with ./run_forever.sh
 
