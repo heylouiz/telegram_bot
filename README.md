@@ -16,6 +16,9 @@ sudo apt-get install fortune
 requests (http://docs.python-requests.org/en/latest/):
 sudo pip3 install requests
 
+botan.io (https://github.com/botanio/sdk/):
+It's added as a git submodule, just run: git submodule init && git submodule update
+
 Before you can start the bot you need to create a telegram bot and get a token, check the oficial documentation here:
 https://core.telegram.org/bots
 

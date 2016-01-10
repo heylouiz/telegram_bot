@@ -1,0 +1,3 @@
+[submodule "src/botan/sdk"]
+	path = src/botan/sdk
+	url = https://github.com/botanio/sdk.git

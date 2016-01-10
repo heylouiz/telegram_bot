@@ -7,6 +7,10 @@ import sys
 import importlib
 from enabled_modules import enabled_modules
 
+# Use botan to bot analytics
+sys.path.insert(0, 'botan/sdk')
+import botan
+
 # Dinamically import enabled modules, edit file enabled_modules.py
 bot_modules = {}
 for module_name in enabled_modules:
@@ -37,9 +41,12 @@ def test_command(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id, text="Hello")
 
 def any_message(bot, update):
-    """ Print to console """
+    """ Print to console and log activity to Botan.io"""
+    print(botan.track(open('botan_token.txt', 'r').read().strip(),
+                      update.message.from_user.id,
+                      update.message.to_dict(),
+                      update.message.text.split(" ")[0]))
 
-    # Save last chat_id to use in reply handler
     logger.info("New message\nFrom: %s\nchat_id: %d\nText: %s" %
                 (update.message.from_user,
                  update.message.chat_id,

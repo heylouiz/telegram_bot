@@ -6,7 +6,7 @@ from urllib.parse import quote
 from telegram import ChatAction
 from telegram.dispatcher import run_async
 
-BASE_URL = "http://107.170.7.193:2678/api/v1/tts/"
+BASE_URL = "http://45.55.128.156:2678/api/v1/tts/"
 
 def help_command():
     return '/speak - Make the bot speak.\n- Usage: /speak text\n' +\
