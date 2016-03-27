@@ -1,7 +1,23 @@
 .project
 .pydevproject
-*.pyc
 *token.txt
 *bing_key.py
 *google_key.py
+
 *~
+*#
+.#*
+\#*#
+.*.sw[a-z]
+*.un~
+
+# Python related
+.env
+.python-version
+.cache
+.coverage
+.coveragerc
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg*
