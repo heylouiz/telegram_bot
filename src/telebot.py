@@ -2,18 +2,23 @@
 
 from telegram import Updater
 from telegram.dispatcher import run_async
+from telegram.utils.botan import Botan
+import json
 import logging
 import sys
 import importlib
 from enabled_modules import enabled_modules
 
-# Use botan to bot analytics
-sys.path.insert(0, 'botan/sdk')
-import botan
+# Load config file
+with open('config.json') as config_file:
+    CONFIGURATION = json.load(config_file)
+
+# Create a Botan tracker object
+botan = Botan(CONFIGURATION["botan_token"]) # pylint:disable=invalid-name
 
 # Dinamically import enabled modules, edit file enabled_modules.py
 bot_modules = {}
-for module_name in enabled_modules:
+for module_name in CONFIGURATION["enabled_modules"]:
     sys.path.insert(0, 'modules/' + module_name)
     bot_modules[module_name] = importlib.import_module(module_name)
 
@@ -41,11 +46,9 @@ def test_command(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id, text="Hello")
 
 def any_message(bot, update):
-    """ Print to console and log activity to Botan.io"""
-    print(botan.track(open('botan_token.txt', 'r').read().strip(),
-                      update.message.from_user.id,
-                      update.message.to_dict(),
-                      update.message.text.split(" ")[0]))
+    """ Print to console and log activity with Botan.io """
+    botan.track(update.message,
+                update.message.text.split(" ")[0])
 
     logger.info("New message\nFrom: %s\nchat_id: %d\nText: %s" %
                 (update.message.from_user,
@@ -58,8 +61,7 @@ def error(bot, update, error):
 
 def main():
     # Create the EventHandler and pass it your bot's token.
-    token = open('telegram_token.txt', 'r').read().strip()
-    updater = Updater(token, workers=10)
+    updater = Updater(CONFIGURATION["telegram_token"], workers=10)
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
@@ -74,6 +76,8 @@ def main():
         #     command: qrcode
         dp.addTelegramCommandHandler(module_name.replace("_", ""), getattr(module, module_name + "_command"))
         dp.addTelegramRegexHandler('^/' + module_name, any_message) # Handler to log requests
+
+    dp.addTelegramCommandHandler("more", bot_modules["image"].image_command)
 
     # Other handlers
     dp.addErrorHandler(error)

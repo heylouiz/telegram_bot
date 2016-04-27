@@ -7,16 +7,13 @@ import random
 from telegram import ChatAction
 from telegram.dispatcher import run_async
 
-sys.path.insert(0, 'modules/image')
-import bing_key
-import google_key
+from telebot import CONFIGURATION
 
-
-# Create an array with id of special groups
-special_groups = [int(group) for group in open("modules/image/special_groups.conf", "r").read().split(";")]
+# Store preview request from chat
+last_request = {} #pylint: disable=invalid-name
 
 def help_command():
-    return '/image - Get a random image from search in Bing Images.\n - Usage: /image word\n' +\
+    return '/image - Get a random image.\n - Usage: /image word\n' +\
            'To teorically get the best image, use the options -best.\n - Usage: /image word -best\n'
 
 # Send error message
@@ -36,15 +33,41 @@ def sendImageMessage(bot, update, image_url):
         print("/image error: " + str(e) + "\nLink: " + str(image_url))
         return -1
 
+def lucasSearch(search_string):
+    image_results = []
+
+    try:
+        url = "{}:2666/{}".format(CONFIGURATION["services_server"], search_string)
+        r = requests.get(url)
+
+        # Check HTTP error code
+        if r.status_code != 200:
+            error_message = "Failed to get image. Server error, try again later."
+            print(r.text)
+            return (-1, error_message)
+
+        results = r.json()
+
+    except requests.exceptions.RequestException as e:
+        print(e)
+        error_message = "Failed to get image. Server error, try again later."
+        return (-1, error_message)
+
+
+    for r in results:
+            image_results.append(r)
+
+    return (0, image_results)
+
 def googleSearch(search_string):
     image_results = []
 
     try:
-        url = 'https://www.googleapis.com/customsearch/v1?' +\
-              'q=' + search_string                          +\
-              '&cx=' + google_key.key["cse_id"]             +\
-              '&key=' + google_key.key["api_id"]            +\
-              '&searchType=image'                           +\
+        url = 'https://www.googleapis.com/customsearch/v1?'                +\
+              'q=' + search_string                                         +\
+              '&cx=' + CONFIGURATION["image"]["google_keys"][0]["cse_id"]  +\
+              '&key=' + CONFIGURATION["image"]["google_keys"][0]["api_id"] +\
+              '&searchType=image'                                          +\
               '&safe=medium'
         r = requests.get(url)
 
@@ -77,7 +100,8 @@ def bingSearch(search_string):
               '\'&Adult=\'Moderate\''                               +\
               '&Market=\'pt-BR\''                                   +\
               '&$format=json'
-        r = requests.get(url, auth=(bing_key.keys[1], bing_key.keys[1]))
+        r = requests.get(url, auth=(CONFIGURATION["image"]["bing_keys"][0],
+                                    CONFIGURATION["image"]["bing_keys"][0]))
 
         # Check HTTP error code
         if r.status_code != 200:
@@ -104,13 +128,17 @@ def image_command(bot, update, **kwargs):
 
     # Command variables
     best = False
+    more = False
     image_results = []
     search_string = ""
-    search_engine = "bing"
+    search_engine = "lucas"
     timeout = 5
-    global special_groups
+    global last_request
 
-    if len(kwargs["args"]) == 0:
+    if message.find("/more") >= 0:
+        more = True
+
+    if len(kwargs["args"]) == 0 and more == False:
         sendErrorMessage(bot, update, "Wrong syntax. See /image -help.")
         return
 
@@ -129,23 +157,33 @@ def image_command(bot, update, **kwargs):
     # Remove "/image" from the message
     message = message.split(" ", 1)
 
-    if len(message) == 1:
-        sendErrorMessage(bot, update, "Missing search string. See /image -help.")
-        return
-    else:
-        message = message[1].strip()
+    if more == False:
+        if len(message) == 1:
+            sendErrorMessage(bot, update, "Missing search string. See /image -help.")
+            return
+        else:
+            message = message[1].strip()
 
     # Inform that the bot will send an image
     bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.UPLOAD_PHOTO)
 
-    if update.message.chat_id in special_groups:
+    if update.message.chat_id in CONFIGURATION["image"]["special_groups"]:
         search_engine = "google"
 
     # Query string
-    search_string = message.strip()
+    if more:
+        try:
+            search_string = last_request[update.message.chat_id]
+        except KeyError:
+            sendErrorMessage(bot, update, "No previous image search in this chat.")
+            return
+    else:
+        search_string = message.strip()
 
     if search_engine == "google":
         (error_code, result) = googleSearch(search_string)
+    elif search_engine == "lucas":
+        (error_code, result) = lucasSearch(search_string)
     else:
         (error_code, result) = bingSearch(search_string)
 
@@ -185,3 +223,6 @@ def image_command(bot, update, **kwargs):
             if image_to_send == "":  # This should never happen
                 image_to_send == image_results[0]
             timeout -= 1
+
+    # Save the  chat_id from last request
+    last_request[update.message.chat_id] = search_string

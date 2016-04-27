@@ -6,7 +6,9 @@ from urllib.parse import quote
 from telegram import ChatAction
 from telegram.dispatcher import run_async
 
-BASE_URL = "http://45.55.128.156:2678/api/v1/tts/"
+from telebot import CONFIGURATION
+
+BASE_URL = "{}:2628/api/v1/tts/".format(CONFIGURATION["services_server"])
 
 def help_command():
     return '/speak - Make the bot speak.\n- Usage: /speak text\n' +\
@@ -68,7 +70,7 @@ def speak_command(bot, update, **kwargs):
 
     # Make url
     encoded_text = quote(text_to_speak)
-    url = BASE_URL + encoded_text + "/" + engine + "/" + lang + "/" + voice + "/0/0/" + bot.getMe()["username"] 
+    url = BASE_URL + encoded_text + "/" + engine + "/" + lang + "/" + voice + "/0/0/"
     try:
         r = requests.get(url)
 
