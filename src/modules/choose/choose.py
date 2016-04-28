@@ -1,22 +1,22 @@
 #!/usr/bin/env python
 
 from telegram import ChatAction
-from telegram.dispatcher import run_async
+from telegram.ext.dispatcher import run_async
 import random
 
 def help_command():
     return '/choose  - Randomly picks one of the given choices.\n - Usage: /choose yes, no\n'
 
 @run_async
-def choose_command(bot, update, **kwargs):
+def choose_command(bot, update, args):
     message = update.message.text
 
-    if "-help" in kwargs["args"]:
+    if "-help" in args:
         bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.TYPING)
         bot.sendMessage(chat_id=update.message.chat_id, text=help_command())
         return
 
-    if len(kwargs["args"]) == 0:
+    if len(args) == 0:
         bot.sendMessage(chat_id=update.message.chat_id,
                         text="Wrong syntax. See /choose -help.",
                         reply_to_message_id=update.message.message_id)

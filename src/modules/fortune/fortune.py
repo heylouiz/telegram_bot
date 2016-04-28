@@ -2,24 +2,24 @@
 
 import subprocess
 from telegram import ChatAction
-from telegram.dispatcher import run_async
+from telegram.ext.dispatcher import run_async
 
 def help_command():
     return '/fortune - Print a fortune message.\n - Usage: /fortune\n'
 
 @run_async
-def fortune_command(bot, update, **kwargs):
+def fortune_command(bot, update, args):
     message = update.message.text
     message = message.replace("/fortune", "").strip()
 
     database = "-a"
 
-    if "-help" in kwargs["args"]:
+    if "-help" in args:
         bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.TYPING)
         bot.sendMessage(chat_id=update.message.chat_id, text=help_command())
         return
 
-    if "-pt" in kwargs["args"]:
+    if "-pt" in args:
         database = "/usr/share/games/fortunes/brasil"
 
     # Inform that the bot will send a text message

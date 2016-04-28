@@ -3,21 +3,21 @@
 import os
 import qrcode
 from telegram import ChatAction
-from telegram.dispatcher import run_async
+from telegram.ext.dispatcher import run_async
 
 def help_command():
     return '/qrcode  - Get a qrcode from given text.\n - Usage: /qrcode text to qrcode\n'
 
 @run_async
-def qr_code_command(bot, update, **kwargs):
+def qr_code_command(bot, update, args):
     message = update.message.text
 
-    if "-help" in kwargs["args"]:
+    if "-help" in args:
         bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.TYPING)
         bot.sendMessage(chat_id=update.message.chat_id, text=help_command())
         return
 
-    if len(kwargs["args"]) == 0:
+    if len(args) == 0:
         bot.sendMessage(chat_id=update.message.chat_id, 
                         text="Wrong syntax. See /qrcode -help.",
                         reply_to_message_id=update.message.message_id)

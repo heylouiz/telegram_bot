@@ -5,7 +5,7 @@ import sys
 import random
 
 from telegram import ChatAction
-from telegram.dispatcher import run_async
+from telegram.ext.dispatcher import run_async
 
 from telebot import CONFIGURATION
 
@@ -123,7 +123,7 @@ def bingSearch(search_string):
     return (0, image_results)
 
 @run_async
-def image_command(bot, update, **kwargs):
+def image_command(bot, update, args):
     message = update.message.text
 
     # Command variables
@@ -138,19 +138,19 @@ def image_command(bot, update, **kwargs):
     if message.find("/more") >= 0:
         more = True
 
-    if len(kwargs["args"]) == 0 and more == False:
+    if len(args) == 0 and more == False:
         sendErrorMessage(bot, update, "Wrong syntax. See /image -help.")
         return
 
     # Check parameters
-    if "-help" in kwargs["args"]:
+    if "-help" in args:
         bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.TYPING)
         bot.sendMessage(chat_id=update.message.chat_id,
                         text=help_command(),
                         reply_to_message_id=update.message.message_id)
         return
 
-    if "-best" in kwargs["args"]:
+    if "-best" in args:
         message = message.replace("-best", "").strip()
         best = True
 

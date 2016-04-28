@@ -3,21 +3,21 @@
 import requests
 import os
 from telegram import ChatAction
-from telegram.dispatcher import run_async
+from telegram.ext.dispatcher import run_async
 
 def help_command():
     return '/doge    - Get a doge image meme with custom phrases.\n - Usage: /doge phrase1, phrase2, phrase3...\n'
 
 @run_async
-def doge_command(bot, update, **kwargs):
+def doge_command(bot, update, args):
     message = update.message.text
 
-    if "-help" in kwargs["args"]:
+    if "-help" in args:
         bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.TYPING)
         bot.sendMessage(chat_id=update.message.chat_id, text=help_command())
         return
 
-    if len(kwargs["args"]) == 0:
+    if len(args) == 0:
         bot.sendMessage(chat_id=update.message.chat_id,
                         text="Wrong syntax. See /doge -help.",
                         reply_to_message_id=update.message.message_id)

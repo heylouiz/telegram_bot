@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
-from telegram import Updater
-from telegram.dispatcher import run_async
+from telegram.ext import Updater
+from telegram.ext.dispatcher import run_async
+from telegram.ext import CommandHandler, MessageHandler, RegexHandler, Filters
 from telegram.utils.botan import Botan
 import json
 import logging
 import sys
 import importlib
-from enabled_modules import enabled_modules
 
 # Load config file
 with open('config.json') as config_file:
@@ -67,23 +67,28 @@ def main():
     dp = updater.dispatcher
 
     # Commands
-    dp.addTelegramCommandHandler("test", test_command)
-    dp.addTelegramCommandHandler("help", help_command)
+    dp.addHandler(CommandHandler("test", test_command))
+    dp.addHandler(CommandHandler("help", help_command))
 
     for module_name, module in bot_modules.items():
         # If the name of the module has a "_" in the name, the command should be his name without the "_".
         # Eg: module name: qr_code
         #     command: qrcode
-        dp.addTelegramCommandHandler(module_name.replace("_", ""), getattr(module, module_name + "_command"))
-        dp.addTelegramRegexHandler('^/' + module_name, any_message) # Handler to log requests
+        dp.addHandler(CommandHandler(module_name.replace("_", ""), getattr(module, module_name + "_command"), pass_args=True))
+        dp.addHandler(CommandHandler(module_name.replace("_", ""), any_message)) # Handler to log requests
 
-    dp.addTelegramCommandHandler("more", bot_modules["image"].image_command)
+    dp.addHandler(CommandHandler("more", bot_modules["image"].image_command))
 
     # Other handlers
     dp.addErrorHandler(error)
 
     # Start the Bot and store the update Queue, so we can insert updates
-    update_queue = updater.start_polling(poll_interval=0.1, timeout=20)
+    updater.start_polling()
+
+    # Run the bot until the you presses Ctrl-C or the process receives SIGINT,
+    # SIGTERM or SIGABRT. This should be used most of the time, since
+    # start_polling() is non-blocking and will stop the bot gracefully.
+    updater.idle()
 
 if __name__ == '__main__':
     main()

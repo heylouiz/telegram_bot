@@ -4,7 +4,7 @@ import os
 import requests
 from urllib.parse import quote
 from telegram import ChatAction
-from telegram.dispatcher import run_async
+from telegram.ext.dispatcher import run_async
 
 from telebot import CONFIGURATION
 
@@ -18,7 +18,7 @@ def help_command():
            'This works both in english (-en) and portuguese.\n-Usage: /speak -w text.\n'
 
 @run_async
-def speak_command(bot, update, **kwargs):
+def speak_command(bot, update, args):
     message = update.message.text
 
     # Default is pt-br
@@ -26,29 +26,29 @@ def speak_command(bot, update, **kwargs):
     lang = "6" # Portuguese
     voice = "5" # Felipe
 
-    if "-help" in kwargs["args"]:
+    if "-help" in args:
         bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.TYPING)
         bot.sendMessage(chat_id=update.message.chat_id, text=help_command())
         return
 
-    if len(kwargs["args"]) == 0:
+    if len(args) == 0:
         bot.sendMessage(chat_id=update.message.chat_id, 
                         text="Wrong syntax. See /speak -help.",
                         reply_to_message_id=update.message.message_id)
         return
 
-    if "-en" in kwargs["args"]:
+    if "-en" in args:
         message = message.replace("-en", "").strip()
         engine = "4"
         voice = "5" # Daniel
         lang = "1" # English
 
-    if "-pt" in kwargs["args"]:
+    if "-pt" in args:
         message = message.replace("-pt", "").strip()
 
-    if "-w" in kwargs["args"]:
+    if "-w" in args:
         message = message.replace("-w", "").strip()
-        if "-en" in kwargs["args"]:
+        if "-en" in args:
             engine = "3"
             voice = "6" # Ashley
         else:
