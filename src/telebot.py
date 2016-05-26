@@ -22,17 +22,11 @@ for module_name in CONFIGURATION["enabled_modules"]:
     sys.path.insert(0, 'modules/' + module_name)
     bot_modules[module_name] = importlib.import_module(module_name)
 
-root = logging.getLogger()
-root.setLevel(logging.INFO)
+# Enable logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
 
-ch = logging.StreamHandler(sys.stdout)
-ch.setLevel(logging.INFO)
-formatter = \
-    logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-ch.setFormatter(formatter)
-root.addHandler(ch)
-
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 def help_command(bot, update):
     help_message = "Help:\n\n"
@@ -45,23 +39,24 @@ def help_command(bot, update):
 def test_command(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id, text="Hello")
 
+@run_async
 def any_message(bot, update):
     """ Print to console and log activity with Botan.io """
     botan.track(update.message,
                 update.message.text.split(" ")[0])
 
-    logger.info("New message\nFrom: %s\nchat_id: %d\nText: %s" %
+    LOGGER.info("New message\nFrom: %s\nchat_id: %d\nText: %s" %
                 (update.message.from_user,
                  update.message.chat_id,
                  update.message.text))
 
 def error(bot, update, error):
     """ Print error to console """
-    logger.warn('Update %s caused error %s' % (update, error))
+    LOGGER.warn('Update %s caused error %s' % (update, error))
 
 def main():
     # Create the EventHandler and pass it your bot's token.
-    updater = Updater(CONFIGURATION["telegram_token"], workers=10)
+    updater = Updater(CONFIGURATION["telegram_token"], workers=20)
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
@@ -75,9 +70,9 @@ def main():
         # Eg: module name: qr_code
         #     command: qrcode
         dp.addHandler(CommandHandler(module_name.replace("_", ""), getattr(module, module_name + "_command"), pass_args=True))
-        dp.addHandler(CommandHandler(module_name.replace("_", ""), any_message)) # Handler to log requests
+        dp.addHandler(CommandHandler(module_name.replace("_", ""), any_message), group=1) # Handler to log requests
 
-    dp.addHandler(CommandHandler("more", bot_modules["image"].image_command))
+    dp.addHandler(CommandHandler("more", bot_modules["image"].image_command, pass_args=True))
 
     # Other handlers
     dp.addErrorHandler(error)
