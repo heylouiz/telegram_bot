@@ -4,10 +4,12 @@ import requests
 import sys
 import random
 
-from telegram import ChatAction
+from telegram import ChatAction, ForceReply
 from telegram.ext.dispatcher import run_async
 
 from telebot import CONFIGURATION
+
+from context import bot_context
 
 # Store preview request from chat
 last_request = {} #pylint: disable=invalid-name
@@ -17,23 +19,23 @@ def help_command():
            'To teorically get the best image, use the options -best.\n - Usage: /image word -best\n'
 
 # Send error message
-def sendErrorMessage(bot, update, error_text):
-    bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.TYPING)
-    bot.sendMessage(chat_id=update.message.chat_id,
+def send_error_message(bot, update, error_text):
+    bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
+    bot.send_message(chat_id=update.message.chat_id,
                     text=error_text,
                     reply_to_message_id=update.message.message_id)
 
 
-# Auxiliar function to sendPhoto
-def sendImageMessage(bot, update, image_url):
+# Auxiliar function to send_photo
+def send_image_message(bot, update, image_url):
     try:
-        bot.sendPhoto(chat_id=update.message.chat_id, photo=image_url)
+        bot.send_photo(chat_id=update.message.chat_id, photo=image_url)
         return 0
     except Exception as e:
         print("/image error: " + str(e) + "\nLink: " + str(image_url))
         return -1
 
-def lucasSearch(search_string):
+def lucas_search(search_string):
     image_results = []
 
     try:
@@ -59,7 +61,7 @@ def lucasSearch(search_string):
 
     return (0, image_results)
 
-def googleSearch(search_string):
+def google_search(search_string):
     image_results = []
 
     try:
@@ -91,7 +93,7 @@ def googleSearch(search_string):
     return (0, image_results)
 
 
-def bingSearch(search_string):
+def bing_search(search_string):
     image_results = []
 
     try:
@@ -139,13 +141,18 @@ def image_command(bot, update, args):
         more = True
 
     if len(args) == 0 and more == False:
-        sendErrorMessage(bot, update, "Wrong syntax. See /image -help.")
+        # Add this command as last command from user ID
+        bot_context[update.message.from_user.id] = "image"
+        bot.send_message(chat_id=update.message.chat_id,
+                        text="Send me what you wanna search. Ex: cute dogs",
+                        reply_to_message_id=update.message.message_id,
+                        reply_markup=ForceReply(selective=True))
         return
 
     # Check parameters
     if "-help" in args:
-        bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.TYPING)
-        bot.sendMessage(chat_id=update.message.chat_id,
+        bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
+        bot.send_message(chat_id=update.message.chat_id,
                         text=help_command(),
                         reply_to_message_id=update.message.message_id)
         return
@@ -154,18 +161,11 @@ def image_command(bot, update, args):
         message = message.replace("-best", "").strip()
         best = True
 
-    # Remove "/image" from the message
-    message = message.split(" ", 1)
-
-    if more == False:
-        if len(message) == 1:
-            sendErrorMessage(bot, update, "Missing search string. See /image -help.")
-            return
-        else:
-            message = message[1].strip()
+    if message.find("/image") >= 0 and not more: # If the command was directly called
+        message = message.split(" ", 1)[1] # Remove "/image" from the message
 
     # Inform that the bot will send an image
-    bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.UPLOAD_PHOTO)
+    bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.UPLOAD_PHOTO)
 
     if update.message.chat_id in CONFIGURATION["image"]["special_groups"]:
         search_engine = "google"
@@ -175,27 +175,27 @@ def image_command(bot, update, args):
         try:
             search_string = last_request[update.message.chat_id]
         except KeyError:
-            sendErrorMessage(bot, update, "No previous image search in this chat.")
+            send_error_message(bot, update, "No previous image search in this chat.")
             return
     else:
         search_string = message.strip()
 
     if search_engine == "google":
-        (error_code, result) = googleSearch(search_string)
+        (error_code, result) = google_search(search_string)
     elif search_engine == "lucas":
-        (error_code, result) = lucasSearch(search_string)
+        (error_code, result) = lucas_search(search_string)
     else:
-        (error_code, result) = bingSearch(search_string)
+        (error_code, result) = bing_search(search_string)
 
     if error_code == 0:
         image_results = result
     else:
-        sendErrorMessage(bot, update, result)
+        send_error_message(bot, update, result)
         return
 
     # If no image was found
     if len(image_results) == 0:
-        sendErrorMessage(bot, update, "Could not find any images for {}".format(search_string.replace("%20", " ")))
+        send_error_message(bot, update, "Could not find any images for {}".format(search_string.replace("%20", " ")))
         return
     else:
         # Use only the first 10 results
@@ -210,9 +210,9 @@ def image_command(bot, update, args):
             image_to_send = random.choice(image_results)
 
         # Tries to send image until timeout
-        while sendImageMessage(bot, update, image_to_send) != 0:
+        while send_image_message(bot, update, image_to_send) != 0:
             if timeout <= 0:
-                sendErrorMessage(bot, update, "Failed to get image, try again.")
+                send_error_message(bot, update, "Failed to get image, try again.")
                 break;
             if best:
                 best_count += 1

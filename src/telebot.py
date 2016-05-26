@@ -9,6 +9,8 @@ import logging
 import sys
 import importlib
 
+from context import bot_context
+
 # Load config file
 with open('config.json') as config_file:
     CONFIGURATION = json.load(config_file)
@@ -34,10 +36,10 @@ def help_command(bot, update):
     for module_name, module in bot_modules.items():
         help_message += getattr(module, "help_command")()
 
-    bot.sendMessage(chat_id=update.message.chat_id, text=help_message)
+    bot.send_message(chat_id=update.message.chat_id, text=help_message)
 
 def test_command(bot, update):
-    bot.sendMessage(chat_id=update.message.chat_id, text="Hello")
+    bot.send_message(chat_id=update.message.chat_id, text="Hello")
 
 @run_async
 def any_message(bot, update):
@@ -49,6 +51,19 @@ def any_message(bot, update):
                 (update.message.from_user,
                  update.message.chat_id,
                  update.message.text))
+
+# Redirect the args to the right command acording to the user last command to bot
+@run_async
+def redirect_command(bot, update):
+    try:
+        last_command = bot_context[update.message.from_user.id]
+        # Call the correct command with the response by user
+        getattr(bot_modules[last_command],
+                last_command + "_command")(bot, update, args=update.message.text.split(" "))
+
+        del bot_context[update.message.from_user.id]
+    except KeyError:
+        return
 
 def error(bot, update, error):
     """ Print error to console """
@@ -62,20 +77,24 @@ def main():
     dp = updater.dispatcher
 
     # Commands
-    dp.addHandler(CommandHandler("test", test_command))
-    dp.addHandler(CommandHandler("help", help_command))
+    dp.add_handler(CommandHandler("test", test_command))
+    dp.add_handler(CommandHandler("help", help_command))
 
     for module_name, module in bot_modules.items():
-        # If the name of the module has a "_" in the name, the command should be his name without the "_".
+        # If the name of the module has a "_" in the name,
+        # the command should be his name without the "_".
         # Eg: module name: qr_code
         #     command: qrcode
-        dp.addHandler(CommandHandler(module_name.replace("_", ""), getattr(module, module_name + "_command"), pass_args=True))
-        dp.addHandler(CommandHandler(module_name.replace("_", ""), any_message), group=1) # Handler to log requests
+        dp.add_handler(CommandHandler(module_name.replace("_", ""),
+                                      getattr(module, module_name + "_command"), pass_args=True))
+        dp.add_handler(CommandHandler(module_name.replace("_", ""),
+                                      any_message), group=1) # Handler to log requests
 
-    dp.addHandler(CommandHandler("more", bot_modules["image"].image_command, pass_args=True))
+    dp.add_handler(CommandHandler("more", bot_modules["image"].image_command, pass_args=True))
+    dp.add_handler(MessageHandler([Filters.text], redirect_command))
 
     # Other handlers
-    dp.addErrorHandler(error)
+    dp.add_error_handler(error)
 
     # Start the Bot and store the update Queue, so we can insert updates
     updater.start_polling()

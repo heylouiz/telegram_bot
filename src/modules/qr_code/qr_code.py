@@ -13,12 +13,12 @@ def qr_code_command(bot, update, args):
     message = update.message.text
 
     if "-help" in args:
-        bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.TYPING)
-        bot.sendMessage(chat_id=update.message.chat_id, text=help_command())
+        bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
+        bot.send_message(chat_id=update.message.chat_id, text=help_command())
         return
 
     if len(args) == 0:
-        bot.sendMessage(chat_id=update.message.chat_id, 
+        bot.send_message(chat_id=update.message.chat_id, 
                         text="Wrong syntax. See /qrcode -help.",
                         reply_to_message_id=update.message.message_id)
         return
@@ -27,7 +27,7 @@ def qr_code_command(bot, update, args):
     message = message.split(' ', 1)[1].strip()
 
     # Inform that the bot will send an image
-    bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.UPLOAD_PHOTO)
+    bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.UPLOAD_PHOTO)
 
     try:
         img = qrcode.make(message)
@@ -36,11 +36,11 @@ def qr_code_command(bot, update, args):
 
         img.save(qrcode_unique)
     except:
-        bot.sendMessage(chat_id=update.message.chat_id, 
+        bot.send_message(chat_id=update.message.chat_id, 
                         text="Failed to create qrcode, try again.",
                         reply_to_message_id=update.message.message_id)
         return
 
-    bot.sendPhoto(chat_id=update.message.chat_id, photo=open(qrcode_unique, 'rb'))
+    bot.send_photo(chat_id=update.message.chat_id, photo=open(qrcode_unique, 'rb'))
 
     os.remove(qrcode_unique)

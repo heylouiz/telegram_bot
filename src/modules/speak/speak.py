@@ -3,10 +3,12 @@
 import os
 import requests
 from urllib.parse import quote
-from telegram import ChatAction
+from telegram import ChatAction, ForceReply
 from telegram.ext.dispatcher import run_async
 
 from telebot import CONFIGURATION
+
+from context import bot_context
 
 BASE_URL = "{}:2628/api/v1/tts/".format(CONFIGURATION["services_server"])
 
@@ -27,14 +29,17 @@ def speak_command(bot, update, args):
     voice = "5" # Felipe
 
     if "-help" in args:
-        bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.TYPING)
-        bot.sendMessage(chat_id=update.message.chat_id, text=help_command())
+        bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
+        bot.send_message(chat_id=update.message.chat_id, text=help_command())
         return
 
     if len(args) == 0:
-        bot.sendMessage(chat_id=update.message.chat_id, 
-                        text="Wrong syntax. See /speak -help.",
-                        reply_to_message_id=update.message.message_id)
+        # Add this command as last command from user ID
+        bot_context[update.message.from_user.id] = "speak"
+        bot.send_message(chat_id=update.message.chat_id,
+                        text="Send me what do you want me to speak",
+                        reply_to_message_id=update.message.message_id,
+                        reply_markup=ForceReply(selective=True))
         return
 
     if "-en" in args:
@@ -54,19 +59,14 @@ def speak_command(bot, update, args):
         else:
             voice = "4" # Fernanda
 
-    # Remove "/speak" from the message
-    message = message.split(" ", 1)
 
-    if len(message) == 1:
-        bot.sendMessage(chat_id=update.message.chat_id, 
-                        text="Missing text to speak. See /speak -help.",
-                        reply_to_message_id=update.message.message_id)
-        return
-    else:
-        text_to_speak = message[1].strip()
+    if message.find("/speak") >= 0: # If the command was directly called
+        message = message.split(" ", 1)[1] # Remove "/speak" from the message
+
+    text_to_speak = message.strip()
 
     # Inform that the bot will send an audio file
-    bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.UPLOAD_AUDIO)
+    bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.UPLOAD_AUDIO)
 
     # Make url
     encoded_text = quote(text_to_speak)
@@ -78,7 +78,7 @@ def speak_command(bot, update, args):
             raise requests.exceptions.RequestException
     except requests.exceptions.RequestException as e:
         print(e)
-        bot.sendMessage(chat_id=update.message.chat_id,
+        bot.send_message(chat_id=update.message.chat_id,
                         text="Failed to create speak, server error.",
                         reply_to_message_id=update.message.message_id)
         return
@@ -89,9 +89,9 @@ def speak_command(bot, update, args):
         speak_file.write(r.content)
 
     try:
-        bot.sendVoice(chat_id=update.message.chat_id, voice=open(speak_unique, 'rb'))
+        bot.send_voice(chat_id=update.message.chat_id, voice=open(speak_unique, 'rb'))
     except Exception as e:
-        bot.sendMessage(chat_id=update.message.chat_id, text='Failed to speak, try again')
+        bot.send_message(chat_id=update.message.chat_id, text='Failed to speak, try again')
 
     os.remove(speak_unique)
 

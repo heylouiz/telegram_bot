@@ -15,19 +15,19 @@ def fortune_command(bot, update, args):
     database = "-a"
 
     if "-help" in args:
-        bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.TYPING)
-        bot.sendMessage(chat_id=update.message.chat_id, text=help_command())
+        bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
+        bot.send_message(chat_id=update.message.chat_id, text=help_command())
         return
 
     if "-pt" in args:
         database = "/usr/share/games/fortunes/brasil"
 
     # Inform that the bot will send a text message
-    bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.TYPING)
+    bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
 
     fortune_out = subprocess.Popen("fortune " + database, stdout=subprocess.PIPE, shell=True)
     output = fortune_out.communicate()[0]
 
     fortune_message = output.decode("utf-8")
 
-    bot.sendMessage(chat_id=update.message.chat_id, text=fortune_message)
+    bot.send_message(chat_id=update.message.chat_id, text=fortune_message)

@@ -1,7 +1,4 @@
 .project
 .pydevproject
 *.pyc
-*token.txt
-*bing_key.py
-*google_key.py
 *~
