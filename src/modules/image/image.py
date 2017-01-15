@@ -39,7 +39,7 @@ def lucas_search(search_string):
     image_results = []
 
     try:
-        url = "{}:2666/{}".format(CONFIGURATION["services_server"], search_string)
+        url = "{}/image/{}".format(CONFIGURATION["services_server"], search_string)
         r = requests.get(url)
 
         # Check HTTP error code
