@@ -10,7 +10,7 @@ from telebot import CONFIGURATION
 
 from context import bot_context
 
-BASE_URL = "{}:2628/api/v1/tts/".format(CONFIGURATION["services_server"])
+BASE_URL = "{}/speak/".format(CONFIGURATION["services_server"])
 
 def help_command():
     return '/speak - Make the bot speak.\n- Usage: /speak text\n' +\
@@ -70,7 +70,7 @@ def speak_command(bot, update, args):
 
     # Make url
     encoded_text = quote(text_to_speak)
-    url = BASE_URL + encoded_text + "/" + engine + "/" + lang + "/" + voice + "/0/0/"
+    url = BASE_URL + engine + "/" + lang + "/" + voice + "/" + encoded_text
     try:
         r = requests.get(url)
 
@@ -94,4 +94,3 @@ def speak_command(bot, update, args):
         bot.send_message(chat_id=update.message.chat_id, text='Failed to speak, try again')
 
     os.remove(speak_unique)
-
