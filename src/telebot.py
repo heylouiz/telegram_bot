@@ -3,7 +3,7 @@
 from telegram.ext import Updater
 from telegram.ext.dispatcher import run_async
 from telegram.ext import CommandHandler, MessageHandler, RegexHandler, Filters
-from telegram.utils.botan import Botan
+from telegram.contrib.botan import Botan
 import json
 import logging
 import sys
