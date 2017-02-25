@@ -1,4 +1,5 @@
 FROM alpine
+MAINTAINER Diego Ruggeri <diego@ruggeri.net.br> (@diegor2)
 
 RUN apk --update --no-cache add \
       python3 \
