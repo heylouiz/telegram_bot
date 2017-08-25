@@ -29,8 +29,6 @@ def process_cmd(bot, update, args, user_data):
     """ Process the command """
     command_module = loaded_modules[user_data["command"]]
     command_module.process_command(bot, update, args, user_data)
-    #if "fortune" in user_data["command"]:
-    #    print(user_data["command"], args)
     return done(bot, update, user_data)
 
 def handle_cmd(bot, update, args, user_data):
