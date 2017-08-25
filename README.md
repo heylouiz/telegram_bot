@@ -3,42 +3,31 @@
 A Telegram bot written in Python with a variety of commands.
 Note: Only works in Python 3!
 
-Dependencies
-------------
+## Installing dependencies and running
 
-Python Telegram Bot (https://github.com/python-telegram-bot/python-telegram-bot):
-To install in Debian based distributions:
-sudo pip3 install python-telegram-bot
-
-Fortune (http://linux.die.net/man/6/fortune):
-To install in Debian based distributions:
-sudo apt-get install fortune
-
-requests (http://docs.python-requests.org/en/latest/):
-sudo pip3 install requests
-
-botan.io (https://github.com/botanio/sdk/):
-It's added as a git submodule, just run: git submodule init && git submodule update
-
-Before you can start the bot you need to create a telegram bot and get a token, check the oficial documentation here:
+Note: Before start you need to create a telegram bot and get a token, check the oficial documentation here:
 https://core.telegram.org/bots
 
-After all the requirements are installed you can run the bot using the command:
-python3 telebot.py
+### Dependencies (Only works in Python3)
 
-Theres a script to keep the bot running "forever", you can run it with ./run_forever.sh
+Create a virtualenv (Optional):
+```
+mkdir ~/virtualenv
+virtualenv -p python3 ~/virtualenv
+source ~/virtualenv/bin/activate
+```
+Install the requirements (use sudo if you are not using a virtualenv):
 
-Docker
-------
+```pip install -r requirements.txt```
 
-To run this bot using Docker
+### Running
 
-    docker build -t telegrambot .
-    docker run \
-      -e "TELEGRAM_TOKEN=YOUR-TELEGRAM-TOKEN" \
-      -e "TELEGRAM_BOTANIO_TOKEN=YOUR-BOTANIO-TOKEN" \
-      -e "TELEGRAM_BOT_MODULES=choose doge fortune image qr_code speak" \
-      -e "TELEGRAM_SERVICES_SERVER=http://SERVER:PORT" \
-    telegrambot
+
+After all the requirements are installed edit config.json file with your BOT's Token.
+
+To run the bot simply execute this command:
+```python bot.py```
+
+Theres a script to keep the bot running "forever", you can run it with ```./run_forever.sh```
 
 If you have any doubts let me know!
