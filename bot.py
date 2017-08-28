@@ -1,20 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import importlib
 import json
-import telegram.ext
 import logging
+import os
 import time
 
-from bot_modules import image, speak, fortune, doge, choose
+import telegram.ext
 
-# Loaded modules
-# TODO search and import modules from directory
-loaded_modules = {"image": image,
-                  "speak": speak,
-                  "fortune": fortune,
-                  "doge": doge,
-                  "choose": choose}
+# Globals
+found_modules = list()
+loaded_modules = dict()
+BOT_MODULES_DIR = "bot_modules"
+logger = None
+
+# Search modules from directory
+for f in os.listdir(BOT_MODULES_DIR):
+    if f.find("__.py") >= 0:
+        continue
+    if f.find("module_example") >= 0:
+        continue
+    if f.find(".py") > 0:
+        found_modules.append(f)
+
+# Import modules found
+for m in found_modules:
+    name = m.split(".")[0]
+    module = importlib.import_module(BOT_MODULES_DIR + "." + name)
+    loaded_modules[name] = module
 
 # Enable and configure logger
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
