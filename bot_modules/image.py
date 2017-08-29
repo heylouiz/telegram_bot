@@ -48,7 +48,8 @@ def process_command(bot, update, args, user_data):
     results = custom_search(search_string)
 
     if not results:
-        update.message.reply_text("Não encontrei nenhum resultado para {}", search_string)
+        update.message.reply_text("Não encontrei nenhum resultado para a busca.")
+        return
 
     best_count = 0
     while True:
@@ -60,6 +61,6 @@ def process_command(bot, update, args, user_data):
         except telegram.TelegramError as e:
             print(e)
             if best_count >= len(results):
-                update.message.reply_text("Falha ao enviar imagens para {}", search_string)
+                update.message.reply_text("Falha ao enviar imagens para a busta.")
                 return
             continue
