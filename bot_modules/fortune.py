@@ -12,7 +12,7 @@ need_parameters = False
 ask_for_parameters_text = None
 
 def help():
-    return '/fortune - Print a fortune message.\n - Usage: /fortune\n'
+    return '/fortune - Manda um "pensamento".\n - Uso: /fortune [-pt pra mandar frases em português] \n'
 
 @telegram.ext.dispatcher.run_async
 def process_command(bot, update, args, user_data):

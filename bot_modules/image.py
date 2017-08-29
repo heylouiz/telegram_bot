@@ -14,11 +14,11 @@ command_name = "image"
 
 need_parameters = True
 
-ask_for_parameters_text = "What do you want to search?"
+ask_for_parameters_text = "O que você quer buscar?"
 
 def help():
-    return '/image - Get a random image.\n - Usage: /image word\n' +\
-           'To teorically get the best image, use the options -best.\n - Usage: /image word -best\n'
+    return '/image - Busca e manda uma imagem aleatória.\n - Uso: /image frase\n' +\
+           'Use -best para obter a melhor imagem da busca.\n - Uso: /image frase -best\n'
 
 def custom_search(query):
     r = requests.get("{}/image/{}".format(CONFIGURATION["services_server"], query))
@@ -48,7 +48,7 @@ def process_command(bot, update, args, user_data):
     results = custom_search(search_string)
 
     if not results:
-        update.message.reply_text("Could not find any images for {}", search_string)
+        update.message.reply_text("Não encontrei nenhum resultado para {}", search_string)
 
     best_count = 0
     while True:
@@ -60,6 +60,6 @@ def process_command(bot, update, args, user_data):
         except telegram.TelegramError as e:
             print(e)
             if best_count >= len(results):
-                update.message.reply_text("Failed to send images for {}", search_string)
+                update.message.reply_text("Falha ao enviar imagens para {}", search_string)
                 return
             continue

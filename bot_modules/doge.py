@@ -10,12 +10,12 @@ command_name = "doge"
 
 need_parameters = True
 
-ask_for_parameters_text = "Send me the wow pharases separated by commas." \
+ask_for_parameters_text = "Me mande many frases separadas por virgulas." \
                           " Ex: such wow, very doge"
 
 def help():
-    return '/doge    - Get a doge image meme with custom phrases.\n' \
-           ' - Usage: /doge phrase1, phrase2, phrase3...\n'
+    return '/doge    - Manda um meme do doge com frases customizadas.\n' \
+           ' - Usage: /doge frase1, frase2, frase3...\n'
 
 @telegram.ext.dispatcher.run_async
 def process_command(bot, update, args, user_data):
@@ -39,7 +39,7 @@ def process_command(bot, update, args, user_data):
             raise requests.exceptions.RequestException
     except requests.exceptions.RequestException as e:
         print(e)
-        update.message.reply_text("Wow, very failure, so sorry, much server error.")
+        update.message.reply_text("Wow, very falha, so sorry, much erro.")
 
     unique_doge = "doge_" + str(update.message.message_id) + ".png"
 

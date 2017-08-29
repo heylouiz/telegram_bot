@@ -78,7 +78,7 @@ def handle_user_input(bot, update, user_data):
 def start(bot, update):
     """ Handle command start """
     update.message.reply_text(
-        "Hi, i'm quebot")
+            "Oi, eu sou o Quebot!\nDigite /help para ver a lista de comandos.\nCriador: @heylouiz")
     return telegram.ext.ConversationHandler.END
 
 def help(bot, update):

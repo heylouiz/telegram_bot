@@ -15,14 +15,12 @@ command_name = "speak"
 
 need_parameters = True
 
-ask_for_parameters_text = "What do you want to speech?"
+ask_for_parameters_text = "O que você quer que eu diga?"
 
 def help():
-    return '/speak - Make the bot speak.\n- Usage: /speak text\n' +\
-           'By default the bot speaks portuguese, use the parameter "-en" ' +\
-           'to make it speak in english.\n- Usage: /speak -en text.\n' +\
-           'You can change the gender of the bot using "-w", this will produce a female voice. ' +\
-           'This works both in english (-en) and portuguese.\n-Usage: /speak -w text.\n'
+    return '/speak - Manda uma mensagem de voz com o texto.\n- Usage: /speak texto\n' +\
+           'Para falar em inglês utilizar o parâmetro "-en". Uso: /speak -en text in english.' +\
+           'Para usar uma voz feminina utilize o parâmetro "-w". Uso: /speak -w texto.\n'
 
 @telegram.ext.dispatcher.run_async
 def process_command(bot, update, args, user_data):
@@ -74,7 +72,7 @@ def process_command(bot, update, args, user_data):
             raise requests.exceptions.RequestException
     except requests.exceptions.RequestException as e:
         print(e)
-        update.message.reply_text(text="Failed to create speak, server error.",
+        update.message.reply_text(text="Falha ao criar mensagem de voz.",
                                reply_to_message_id=update.message.message_id)
         return
 
@@ -86,6 +84,6 @@ def process_command(bot, update, args, user_data):
     try:
         update.message.reply_voice(voice=open(speak_unique, 'rb'))
     except Exception as e:
-        update.message.reply_text(text="Failed to create speak, try again.")
+        update.message.reply_text(text="Falha ao criar mensagem de voz.")
 
     os.remove(speak_unique)
