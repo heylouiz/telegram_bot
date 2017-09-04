@@ -69,10 +69,29 @@ def handle_user_input(bot, update, user_data):
     if int(time.time()) - user_data["timestamp"] > 60:
         logger.info("Conversation timedout")
         return done(bot, update, user_data)
+    text = update.message.text
+    if text.find("/") == 0:
+        command = text.split()[0].replace("/", "").split("@")[0]
+        if command not in loaded_modules or command != user_data["command"]:
+            update.message.reply_text("Busca invalida, tente novamente")
+            return done(bot, update, user_data)
+        if len(text.split(" ")) <= 1:
+            user_data["command"] = command
+            command_module = loaded_modules[command]
+            # Check if theres something to query
+            if command_module.need_parameters and "user_input" not in user_data:
+                # Stores the timestamp to timeout the conversation
+                user_data["timestamp"] = int(time.time())
+                update.message.reply_text(text=command_module.ask_for_parameters_text,
+                                          reply_to_message_id=update.message.message_id,
+                                          reply_markup=telegram.ForceReply(selective=True))
+                return ASK_FOR_TEXT
+        else:
+            text = text.split(" ", 1)[1]
     # Log user input
     log(update)
-    user_data["user_input"] = update.message.text
-    args = update.message.text.split()
+    user_data["user_input"] = text
+    args = text.split()
     return process_cmd(bot, update, args, user_data)
 
 def start(bot, update):
@@ -127,7 +146,10 @@ def main():
             states = {
             ASK_FOR_TEXT: [telegram.ext.MessageHandler(telegram.ext.Filters.text,
                                            handle_user_input,
-                                           pass_user_data=True)],
+                                           pass_user_data=True),
+                           telegram.ext.RegexHandler('^/.*',
+                                                    handle_user_input,
+                                                    pass_user_data=True)],
         },
 
         fallbacks=[telegram.ext.RegexHandler('^Done$', done, pass_user_data=True)]
