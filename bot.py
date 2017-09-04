@@ -14,6 +14,8 @@ found_modules = list()
 loaded_modules = dict()
 BOT_MODULES_DIR = "bot_modules"
 logger = None
+SEARCH_HISTORY_FILE = "search_history.json"
+search_history = list()
 
 # Search modules from directory
 for f in os.listdir(BOT_MODULES_DIR):
@@ -30,6 +32,10 @@ for m in found_modules:
     module = importlib.import_module(BOT_MODULES_DIR + "." + name)
     loaded_modules[name] = module
 
+# Load search history json
+with open(SEARCH_HISTORY_FILE) as f:
+    search_history = json.load(f)
+
 # Enable and configure logger
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -43,6 +49,12 @@ def process_cmd(bot, update, args, user_data):
     """ Process the command """
     command_module = loaded_modules[user_data["command"]]
     command_module.process_command(bot, update, args, user_data)
+    # If the command was image, store the search for future user
+    if user_data["command"] == "image":
+        with open(SEARCH_HISTORY_FILE, 'w') as f:
+            global search_history
+            search_history[str(update.message.chat_id)] = " ".join(args)
+            json.dump(search_history, f)
     return done(bot, update, user_data)
 
 def handle_cmd(bot, update, args, user_data):
@@ -94,6 +106,16 @@ def handle_user_input(bot, update, user_data):
     args = text.split()
     return process_cmd(bot, update, args, user_data)
 
+def command_more(bot, update, user_data):
+    chat_id_str = str(update.message.chat_id)
+    if chat_id_str not in search_history:
+        update.message.reply_text("Nenhuma busca antiga registrada, use o /image primeiro")
+        return done(bot, update, {})
+    user_data["command"] = "image"
+    user_data["user_input"] = search_history[chat_id_str]
+    args = user_data["user_input"].split()
+    return process_cmd(bot, update, args, user_data)
+
 def start(bot, update):
     """ Handle command start """
     update.message.reply_text(
@@ -142,7 +164,8 @@ def main():
 
     conv_handler = telegram.ext.ConversationHandler(
         entry_points=[telegram.ext.CommandHandler('start', start),
-                      telegram.ext.CommandHandler('help', help)] + command_entry_points,
+                      telegram.ext.CommandHandler('help', help),
+                      telegram.ext.CommandHandler('more', command_more, pass_user_data=True)] + command_entry_points,
             states = {
             ASK_FOR_TEXT: [telegram.ext.MessageHandler(telegram.ext.Filters.text,
                                            handle_user_input,
