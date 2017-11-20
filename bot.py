@@ -23,7 +23,7 @@ for f in os.listdir(BOT_MODULES_DIR):
         continue
     if f.find("module_example") >= 0:
         continue
-    if f.find(".py") > 0:
+    if f.endswith(".py") > 0:
         found_modules.append(f)
 
 # Import modules found

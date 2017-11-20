@@ -31,9 +31,9 @@ def process_command(bot, update, args, user_data):
         return
 
     # Default is pt-br
-    engine = "2"
+    engine = "3"
     lang = "6" # Portuguese
-    voice = "5" # Felipe
+    voice = "2" # Rafael
 
     # Inform that the bot will send a voice message
     bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.UPLOAD_AUDIO)
@@ -58,7 +58,7 @@ def process_command(bot, update, args, user_data):
             engine = "3"
             voice = "6" # Ashley
         else:
-            voice = "4" # Fernanda
+            voice = "1" # Helena
         args.pop(args.index("-w"))
 
     text_to_speech = " ".join(args)
