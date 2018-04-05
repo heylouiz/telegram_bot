@@ -6,10 +6,6 @@ import random
 
 import telegram
 
-# Load config file from module directory
-with open(os.path.join(os.path.dirname(__file__), 'config.json')) as config_file:
-    CONFIGURATION = json.load(config_file)
-
 command_name = "image"
 
 need_parameters = True
@@ -21,7 +17,7 @@ def help():
            'Use -best para obter a melhor imagem da busca.\n - Uso: /image frase -best\n'
 
 def custom_search(query):
-    r = requests.get("{}/image/{}".format(CONFIGURATION["services_server"], query))
+    r = requests.get("{}/image/{}".format(os.environ['API_SERVER'], query))
     if r.status_code == 200:
         return r.json()
     return []

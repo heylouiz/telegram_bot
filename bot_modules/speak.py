@@ -5,11 +5,7 @@ import requests
 from urllib.parse import quote
 import telegram
 
-# Load config file from module directory
-with open(os.path.join(os.path.dirname(__file__), 'config.json')) as config_file:
-    CONFIGURATION = json.load(config_file)
-
-BASE_URL = "{}/speak/".format(CONFIGURATION["services_server"])
+BASE_URL = "{}/speak/".format(os.environ['API_SERVER'])
 
 command_name = "speak"
 

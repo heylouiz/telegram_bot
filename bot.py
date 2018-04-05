@@ -146,12 +146,9 @@ def log(update):
     logger.info("%s - %s" % (update.message.from_user.first_name, update.message.text))
 
 def main():
-    # Load config file
-    with open('config.json') as config_file:
-        CONFIGURATION = json.load(config_file)
-
+    token = os.environ['TELEGRAM_TOKEN']
     # Create the Updater and pass it your bot's token.
-    updater = telegram.ext.Updater(CONFIGURATION["token"], workers=20)
+    updater = telegram.ext.Updater(token, workers=20)
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
