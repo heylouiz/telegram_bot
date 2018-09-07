@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import os
-import random
 import subprocess
 
 import telegram
@@ -11,8 +9,10 @@ need_parameters = False
 
 ask_for_parameters_text = None
 
+
 def help():
     return '/fortune - Manda um "pensamento".\n - Uso: /fortune [-pt pra mandar frases em português] \n'
+
 
 @telegram.ext.dispatcher.run_async
 def process_command(bot, update, args, user_data):

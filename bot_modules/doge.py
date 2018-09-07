@@ -2,7 +2,6 @@
 
 import os
 import requests
-import subprocess
 
 import telegram
 
@@ -13,9 +12,11 @@ need_parameters = True
 ask_for_parameters_text = "Me mande many frases separadas por virgulas." \
                           " Ex: such wow, very doge"
 
+
 def help():
     return '/doge    - Manda um meme do doge com frases customizadas.\n' \
            ' - Usage: /doge frase1, frase2, frase3...\n'
+
 
 @telegram.ext.dispatcher.run_async
 def process_command(bot, update, args, user_data):
