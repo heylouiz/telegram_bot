@@ -10,12 +10,14 @@ need_parameters = False
 # What the bot should reply to the user if he forget the parameters
 ask_for_parameters_text = None
 
+
 # The message replied by the bot when the user call "/helloworld -help"
 def help():
     return '/module_example - Print Hello World!.\n - Usage: /module_example\n'
 
+
 # The function that process the command
-@telegram.ext.dispatcher.run_async # Decorator that makes the execution of this script assyncronous
+@telegram.ext.dispatcher.run_async  # Decorator that makes the execution of this script assyncronous
 def process_command(bot, update, args, user_data):
 
     # This needs to be here to reply to -help parameter

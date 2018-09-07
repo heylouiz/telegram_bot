@@ -45,6 +45,7 @@ logger = logging.getLogger(__name__)
 # Conversation handler states
 ASK_FOR_TEXT = range(1)
 
+
 def process_cmd(bot, update, args, user_data):
     """ Process the command """
     command_module = loaded_modules[user_data["command"]]
@@ -56,6 +57,7 @@ def process_cmd(bot, update, args, user_data):
             search_history[str(update.message.chat_id)] = " ".join(args)
             json.dump(search_history, f)
     return done(bot, update, user_data)
+
 
 def handle_cmd(bot, update, args, user_data):
     """ Handle a new command """
@@ -74,6 +76,7 @@ def handle_cmd(bot, update, args, user_data):
                                   reply_markup=telegram.ForceReply(selective=True))
         return ASK_FOR_TEXT
     return process_cmd(bot, update, args, user_data)
+
 
 def handle_user_input(bot, update, user_data):
     """ Handle user input to a previous command """
@@ -106,6 +109,7 @@ def handle_user_input(bot, update, user_data):
     args = text.split()
     return process_cmd(bot, update, args, user_data)
 
+
 def command_more(bot, update, user_data):
     chat_id_str = str(update.message.chat_id)
     if chat_id_str not in search_history:
@@ -116,11 +120,13 @@ def command_more(bot, update, user_data):
     args = user_data["user_input"].split()
     return process_cmd(bot, update, args, user_data)
 
+
 def start(bot, update):
     """ Handle command start """
     update.message.reply_text(
             "Oi, eu sou o Quebot!\nDigite /help para ver a lista de comandos.\nCriador: @heylouiz")
     return telegram.ext.ConversationHandler.END
+
 
 def help(bot, update):
     """ Handle command help """
@@ -130,6 +136,7 @@ def help(bot, update):
     update.message.reply_text(help_txt)
     return telegram.ext.ConversationHandler.END
 
+
 def done(bot, update, user_data):
     """ Finish conversation state machine """
     for key in user_data:
@@ -137,13 +144,16 @@ def done(bot, update, user_data):
     user_data.clear()
     return telegram.ext.ConversationHandler.END
 
+
 def error(bot, update, error):
     """ Log errors """
     logger.warn('Update "%s" caused error "%s"' % (update, error))
 
+
 def log(update):
     """ Generic log """
     logger.info("%s - %s" % (update.message.from_user.first_name, update.message.text))
+
 
 def main():
     token = os.environ['TELEGRAM_TOKEN']
@@ -163,13 +173,13 @@ def main():
         entry_points=[telegram.ext.CommandHandler('start', start),
                       telegram.ext.CommandHandler('help', help),
                       telegram.ext.CommandHandler('more', command_more, pass_user_data=True)] + command_entry_points,
-            states = {
+        states={
             ASK_FOR_TEXT: [telegram.ext.MessageHandler(telegram.ext.Filters.text,
-                                           handle_user_input,
-                                           pass_user_data=True),
+                                                       handle_user_input,
+                                                       pass_user_data=True),
                            telegram.ext.RegexHandler('^/.*',
-                                                    handle_user_input,
-                                                    pass_user_data=True)],
+                                                     handle_user_input,
+                                                     pass_user_data=True)],
         },
 
         fallbacks=[telegram.ext.RegexHandler('^Done$', done, pass_user_data=True)]

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import json
 import os
 import requests
 import random
@@ -12,9 +11,11 @@ need_parameters = True
 
 ask_for_parameters_text = "O que você quer buscar?"
 
+
 def help():
     return '/image - Busca e manda uma imagem aleatória.\n - Uso: /image frase\n' +\
            'Use -best para obter a melhor imagem da busca.\n - Uso: /image frase -best\n'
+
 
 def custom_search(query):
     r = requests.get("{}/image/{}".format(os.environ['API_SERVER'], query))
@@ -22,10 +23,9 @@ def custom_search(query):
         return r.json()
     return []
 
+
 @telegram.ext.dispatcher.run_async
 def process_command(bot, update, args, user_data):
-    message = update.message.text
-
     if "-help" in args:
         update.message.reply_text(help())
         return
