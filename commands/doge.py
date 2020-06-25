@@ -1,16 +1,9 @@
 #!/usr/bin/env python
-
 import os
 import requests
+import tempfile
 
-import telegram
-
-command_name = "doge"
-
-need_parameters = True
-
-ask_for_parameters_text = "Me mande many frases separadas por virgulas." \
-                          " Ex: such wow, very doge"
+from telegram.ext.dispatcher import run_async
 
 
 def help():
@@ -18,14 +11,11 @@ def help():
            ' - Usage: /doge frase1, frase2, frase3...\n'
 
 
-@telegram.ext.dispatcher.run_async
-def process_command(bot, update, args, user_data):
-    if "-help" in args:
+@run_async
+def doge(bot, update, args):
+    if hasattr(update.message, 'text') and "-help" in update.message.text:
         update.message.reply_text(help())
         return
-
-    # Inform that the bot will send an image
-    bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.UPLOAD_PHOTO)
 
     # Transform string "bla, ble, bli" in dogr.io/bla/ble/bli.png...
     wow_strings = " ".join(args)
@@ -39,14 +29,13 @@ def process_command(bot, update, args, user_data):
         if r.status_code != 200:
             raise requests.exceptions.RequestException
     except requests.exceptions.RequestException as e:
-        print(e)
         update.message.reply_text("Wow, very falha, so sorry, much erro.")
 
-    unique_doge = "doge_" + str(update.message.message_id) + ".png"
+    filename = tempfile.mkstemp(suffix=".png")[1]
 
-    with open(unique_doge, "wb") as f:
+    with open(filename, 'wb') as f:
         f.write(r.content)
 
-    update.message.reply_photo(photo=open(unique_doge, "rb"))
+    update.message.reply_photo(photo=open(filename, "rb"))
 
-    os.remove(unique_doge)
+    os.remove(filename)

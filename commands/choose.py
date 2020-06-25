@@ -1,21 +1,15 @@
 #!/usr/bin/env python
 import random
-import telegram
-
-command_name = "choose"
-
-need_parameters = True
-
-ask_for_parameters_text = "Me mande as opções separadas por virgula. Ex: sim, não"
+from telegram.ext.dispatcher import run_async
 
 
 def help():
     return '/choose  - Escolhe uma das opções disponíveis\n - Uso: /choose sim, não\n'
 
 
-@telegram.ext.dispatcher.run_async
-def process_command(bot, update, args, user_data):
-    if "-help" in args:
+@run_async
+def choose(bot, update, args):
+    if hasattr(update.message, 'text') and "-help" in update.message.text:
         update.message.reply_text(help())
         return
 
@@ -24,8 +18,5 @@ def process_command(bot, update, args, user_data):
     if choices.find(",") < 0:
         update.message.reply_text("Parametros inválidos.\n" + help())
         return
-
-    # Inform that the bot will send a text
-    bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
 
     update.message.reply_text(random.choice(choices.split(",")))

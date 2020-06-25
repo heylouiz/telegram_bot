@@ -1,16 +1,12 @@
 #!/usr/bin/env python
 import os
 import requests
+import tempfile
+
 from urllib.parse import quote
-import telegram
+from telegram.ext.dispatcher import run_async
 
-BASE_URL = "{}/speak/".format(os.environ['API_SERVER'])
-
-command_name = "speak"
-
-need_parameters = True
-
-ask_for_parameters_text = "O que você quer que eu diga?"
+BASE_URL = "{}/speak".format(os.environ['API_SERVER'])
 
 
 def help():
@@ -19,9 +15,9 @@ def help():
            'Para usar uma voz feminina utilize o parâmetro "-w". Uso: /speak -w texto.\n'
 
 
-@telegram.ext.dispatcher.run_async
-def process_command(bot, update, args, user_data):
-    if "-help" in args:
+@run_async
+def speak(bot, update, args):
+    if hasattr(update.message, 'text') and "-help" in update.message.text:
         update.message.reply_text(help())
         return
 
@@ -29,9 +25,6 @@ def process_command(bot, update, args, user_data):
     engine = "3"
     lang = "6"  # Portuguese
     voice = "2"  # Rafael
-
-    # Inform that the bot will send a voice message
-    bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.UPLOAD_AUDIO)
 
     if "-en" in args:
         engine = "4"
@@ -47,32 +40,38 @@ def process_command(bot, update, args, user_data):
             engine = "3"
             voice = "6"  # Ashley
         else:
+            engine = "3"
             voice = "1"  # Helena
         args.pop(args.index("-w"))
 
     text_to_speech = " ".join(args)
 
+    if not text_to_speech:
+        update.message.reply_text('Nada pra falar, coloque a frase a ser'
+                                  ' falada na frente do comando "/speak cachorro quente"')
+        return
+
     # Make speech url
-    encoded_text = quote(text_to_speech)
-    url = BASE_URL + engine + "/" + lang + "/" + voice + "/" + encoded_text
+    text_to_speech = quote(text_to_speech)
+    url = f'{BASE_URL}/{engine}/{lang}/{voice}/{text_to_speech}'
+    print(url)
     try:
         r = requests.get(url)
         if r.status_code != 200:
             raise requests.exceptions.RequestException
     except requests.exceptions.RequestException as e:
-        print(e)
         update.message.reply_text(text="Falha ao criar mensagem de voz.",
                                   reply_to_message_id=update.message.message_id)
         return
 
-    speak_unique = 'speak_' + str(update.message.message_id) + '.mp3'
+    filename = tempfile.mkstemp(suffix=".mp3")[1]
 
-    with open(speak_unique, 'wb') as speak_file:
+    with open(filename, 'wb') as speak_file:
         speak_file.write(r.content)
 
     try:
-        update.message.reply_voice(voice=open(speak_unique, 'rb'))
+        update.message.reply_voice(voice=open(filename, 'rb'))
     except Exception as e:
         update.message.reply_text(text="Falha ao criar mensagem de voz.")
 
-    os.remove(speak_unique)
+    os.remove(filename)
