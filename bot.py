@@ -3,7 +3,13 @@
 import logging
 import os
 
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
+from telegram import Update
+from telegram.ext import (
+    Updater,
+    CommandHandler,
+    CallbackContext,
+    CallbackQueryHandler,
+)
 
 from commands import image, speak, choose, fortune, doge
 
@@ -32,25 +38,25 @@ HELP_MESSAGE = ('/doge    - Manda um meme do doge com frases customizadas.\n'
 
 
 # Command functions
-def start(bot, update):
+def start(update: Update, context: CallbackContext):
     """Send a message when the command /start is issued."""
     update.message.reply_text(START_MESSAGE)
 
 
-def help(bot, update):
+def help(update: Update, context: CallbackContext):
     """Send a message when the command /help is issued."""
     update.message.reply_text(HELP_MESSAGE)
 
 
-def error(bot, update, error):
+def error(update: Update, context: CallbackContext):
     """Log Errors caused by Updates."""
-    logger.warning('Update "%s" caused error "%s"', update, error)
+    logger.warning('Update "%s" caused error "%s"', update, context.error)
 
 
 def main():
     """Start the bot."""
     # Create the EventHandler and pass it your bot's token.
-    updater = Updater(os.environ['TELEGRAM_TOKEN'])
+    updater = Updater(os.environ['TELEGRAM_TOKEN'], use_context=True)
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
@@ -59,10 +65,10 @@ def main():
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(CommandHandler('help', help))
     dp.add_handler(CommandHandler('image', image.search_image))
-    dp.add_handler(CommandHandler('speak', speak.speak, pass_args=True))
-    dp.add_handler(CommandHandler('choose', choose.choose, pass_args=True))
-    dp.add_handler(CommandHandler('fortune', fortune.fortune, pass_args=True))
-    dp.add_handler(CommandHandler('doge', doge.doge, pass_args=True))
+    dp.add_handler(CommandHandler('speak', speak.speak))
+    dp.add_handler(CommandHandler('choose', choose.choose))
+    dp.add_handler(CommandHandler('fortune', fortune.fortune))
+    dp.add_handler(CommandHandler('doge', doge.doge))
 
     # Add inline button handlers
     dp.add_handler(CallbackQueryHandler(image.more_button))

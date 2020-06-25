@@ -16,7 +16,7 @@ def help():
 
 
 @run_async
-def speak(bot, update, args):
+def speak(update, context):
     if hasattr(update.message, 'text') and "-help" in update.message.text:
         update.message.reply_text(help())
         return
@@ -25,6 +25,8 @@ def speak(bot, update, args):
     engine = "3"
     lang = "6"  # Portuguese
     voice = "2"  # Rafael
+
+    args = context.args
 
     if "-en" in args:
         engine = "4"

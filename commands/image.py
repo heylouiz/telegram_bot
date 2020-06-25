@@ -22,7 +22,7 @@ def custom_search(query):
 
 
 @run_async
-def search_image(bot, update, more=None):
+def search_image(update, context, more=None):
     """Search a image for a given string"""
     if hasattr(update.message, 'text') and "-help" in update.message.text:
         update.message.reply_text(help())
@@ -53,17 +53,17 @@ def search_image(bot, update, more=None):
         with suppress(TelegramError):
             if more:
                 caption = 'Outra imagem de "%s" pedida por "%s"' % (more['query'], more['name'])
-                bot.send_photo(photo=random.choice(results), chat_id=more['chat_id'],
-                               reply_markup=reply_markup, caption=caption)
+                context.bot.send_photo(photo=random.choice(results), chat_id=more['chat_id'],
+                                       reply_markup=reply_markup, caption=caption)
             else:
                 update.message.reply_photo(photo=random.choice(results), reply_markup=reply_markup)
             break
 
 
 @run_async
-def more_button(bot, update):
+def more_button(update, context):
     query = update.callback_query
-
-    search_image(bot, update, {'query': query.data,
-                               'chat_id': query.message.chat_id,
-                               'name': query.from_user.name})
+    query.answer()
+    search_image(update, context, {'query': query.data,
+                                   'chat_id': query.message.chat_id,
+                                   'name': query.from_user.name})

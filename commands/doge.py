@@ -12,13 +12,13 @@ def help():
 
 
 @run_async
-def doge(bot, update, args):
+def doge(update, context):
     if hasattr(update.message, 'text') and "-help" in update.message.text:
         update.message.reply_text(help())
         return
 
     # Transform string "bla, ble, bli" in dogr.io/bla/ble/bli.png...
-    wow_strings = " ".join(args)
+    wow_strings = " ".join(context.args)
     doge_url = "http://dogr.io/"
     doge_url += "/".join(wow_strings.split(","))
     doge_url += ".png?split=false"
@@ -28,7 +28,7 @@ def doge(bot, update, args):
 
         if r.status_code != 200:
             raise requests.exceptions.RequestException
-    except requests.exceptions.RequestException as e:
+    except requests.exceptions.RequestException:
         update.message.reply_text("Wow, very falha, so sorry, much erro.")
 
     filename = tempfile.mkstemp(suffix=".png")[1]

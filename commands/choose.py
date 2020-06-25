@@ -8,12 +8,12 @@ def help():
 
 
 @run_async
-def choose(bot, update, args):
+def choose(update, context):
     if hasattr(update.message, 'text') and "-help" in update.message.text:
         update.message.reply_text(help())
         return
 
-    choices = " ".join(args)
+    choices = " ".join(context.args)
 
     if choices.find(",") < 0:
         update.message.reply_text("Parametros inválidos.\n" + help())
