@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-import os
 import requests
-import tempfile
 
 from telegram.ext.dispatcher import run_async
 
@@ -24,18 +22,11 @@ def doge(update, context):
     doge_url += ".png?split=false"
 
     try:
-        r = requests.get(doge_url)
+        r = requests.get(doge_url, stream=True)
 
         if r.status_code != 200:
             raise requests.exceptions.RequestException
     except requests.exceptions.RequestException:
         update.message.reply_text("Wow, very falha, so sorry, much erro.")
 
-    filename = tempfile.mkstemp(suffix=".png")[1]
-
-    with open(filename, 'wb') as f:
-        f.write(r.content)
-
-    update.message.reply_photo(photo=open(filename, "rb"))
-
-    os.remove(filename)
+    update.message.reply_photo(photo=r.raw)

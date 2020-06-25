@@ -56,24 +56,16 @@ def speak(update, context):
     # Make speech url
     text_to_speech = quote(text_to_speech)
     url = f'{BASE_URL}/{engine}/{lang}/{voice}/{text_to_speech}'
-    print(url)
     try:
-        r = requests.get(url)
+        r = requests.get(url, stream=True)
         if r.status_code != 200:
             raise requests.exceptions.RequestException
-    except requests.exceptions.RequestException as e:
+    except requests.exceptions.RequestException:
         update.message.reply_text(text="Falha ao criar mensagem de voz.",
                                   reply_to_message_id=update.message.message_id)
         return
 
-    filename = tempfile.mkstemp(suffix=".mp3")[1]
-
-    with open(filename, 'wb') as speak_file:
-        speak_file.write(r.content)
-
     try:
-        update.message.reply_voice(voice=open(filename, 'rb'))
-    except Exception as e:
+        update.message.reply_voice(voice=r.raw)
+    except Exception:
         update.message.reply_text(text="Falha ao criar mensagem de voz.")
-
-    os.remove(filename)
