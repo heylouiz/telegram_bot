@@ -27,6 +27,8 @@ def speak(update, context):
     voice = "2"  # Rafael
 
     args = context.args
+    if not args and update.message.reply_to_message:
+        args = update.message.reply_to_message.text.split(" ")
 
     if "-en" in args:
         engine = "4"
