@@ -35,6 +35,8 @@ def search_image(update, context, more=None):
         match = re.search(r'^/.*? (.*)', update.message.text)
         if match:
             query = match.group(1)
+        elif update.message.reply_to_message:
+            query = update.message.reply_to_message.text
         else:
             update.message.reply_text('Nada pra buscar, coloque a palavra a ser'
                                       ' buscada na frente do comando "/image cachorro"')
