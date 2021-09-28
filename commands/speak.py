@@ -30,6 +30,15 @@ client = texttospeech.TextToSpeechClient()
 
 
 def help():
+    return (
+        "/speak - Manda uma mensagem de voz com o texto.\n*Uso*: /speak texto\n"
+        + 'Para falar em inglês, escreva também o parâmetro "-l". Uso: /speak -l en-US text in english.\n'
+        + "Isto vale para quase qualquer idioma, utilizando o padrão [BCP-47](https://en.wikipedia.org/wiki/IETF_language_tag).\n"
+        + "\nO gênero da voz é aleatório por padrão:\n"
+        + 'Para usar uma voz masculina, utilize o parâmetro "-m". Uso: /speak -m texto.\n'
+        + 'Para usar uma voz feminina, utilize o parâmetro "-w".\n'
+        + "\nOs parâmetros podem ser colocados em qualquer lugar da mensagem."
+    )
 
 
 def generate_audio(sentence, language, gender=None):
@@ -123,8 +132,12 @@ def original_speak(update, context):
 
 @run_async
 def speak(update, context):
-    if hasattr(update.message, 'text') and "-help" in update.message.text:
-        update.message.reply_text(help())
+    if hasattr(update.message, "text") and "-help" in update.message.text:
+        update.message.reply_text(
+            help(),
+            parse_mode="markdown",
+            disable_web_page_preview=True,
+        )
         return
 
     lang = "pt-BR"
