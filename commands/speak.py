@@ -10,8 +10,15 @@ from telegram.ext.dispatcher import run_async
 
 from google.cloud import texttospeech
 
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-w", action="store_true", default=None)
+parser.add_argument("-m", action="store_true", default=None)
+parser.add_argument("-l", default="pt-BR")
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "api_key.json"
+CHAR_LIMIT = 800  # GCP TTS char limit
 
 # Select the type of audio file
 audio_config = texttospeech.types.AudioConfig(
@@ -31,7 +38,7 @@ def generate_audio(sentence, language, gender=None):
 
     if not gender:
         gender = "SSML_VOICE_GENDER_UNSPECIFIED"
-    elif 'w' in gender:
+    elif "w" in gender:
         gender = "FEMALE"
     else:
         gender = "MALE"
@@ -39,7 +46,6 @@ def generate_audio(sentence, language, gender=None):
     # Get available voices
     voices = client.list_voices()
     BCP47lang = standardize_tag(language)
-    voices2 = client.list_voices(BCP47lang)
     selectedVoices = [
         voice.name
         for voice in voices.voices
@@ -63,10 +69,6 @@ def generate_audio(sentence, language, gender=None):
 
 @run_async
 def original_speak(update, context):
-    if hasattr(update.message, 'text') and "-help" in update.message.text:
-        update.message.reply_text(help())
-        return
-
     # Default is pt-br
     engine = "3"
     lang = "6"  # Portuguese
@@ -129,28 +131,41 @@ def speak(update, context):
     gender = None
 
     args = context.args
-    if not args and update.message.reply_to_message:
-        args = update.message.reply_to_message.text.split(" ")
 
-    text_to_speech = " ".join(args)
-    # print(text_to_speech)
+    args, unknownArgs = parser.parse_known_args(args)
+    textToSpeech = " ".join(unknownArgs)
 
-    if not text_to_speech:
-        update.message.reply_text('Nada pra falar, coloque a frase a ser'
-                                  ' falada na frente do comando, ex.: "/speak cachorro quente"')
+    lang = args.l
+    if args.w:
+        gender = "w"
+    elif args.m:
+        gender = "m"
+
+    replyID = update.message.message_id
+    if update.message.reply_to_message:
+        textToSpeech = update.message.reply_to_message.text
+        replyID = update.message.reply_to_message.message_id
+
+    if not textToSpeech:
+        update.message.reply_text(
+            "Nada pra falar, coloque a frase a ser"
+            ' falada na frente do comando, ex.: "/speak cachorro quente"'
+        )
         return
 
     try:
-        wavenetResponse = generate_audio(text_to_speech, lang, gender)
+        wavenetResponse = generate_audio(textToSpeech[:CHAR_LIMIT], lang, gender)
     except Exception as e:
-        update.message.reply_text(text="Falha ao criar mensagem de voz.", reply_to_message_id=update.message.message_id)
-        print(e)
+        update.message.reply_text(
+            text="Falha ao criar mensagem de voz.",
+            reply_to_message_id=update.message.message_id,
+        )
+        # print(e)
         return original_speak(update, context)
 
-
     try:
-        update.message.reply_voice(voice=wavenetResponse.audio_content)
+        update.message.reply_voice(voice=wavenetResponse.audio_content, reply_to_message_id=replyID)
     except Exception as e:
         update.message.reply_text(text="Falha ao criar mensagem de voz.")
-        print(e)
+        # print(e)
         return original_speak(update, context)
