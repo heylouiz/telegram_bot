@@ -3,3 +3,5 @@
 *.pyc
 *~
 .venv/
+*api_key*
+.vscode/
