@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 import os
 import random
+import argparse
+from enum import Enum
+
 import requests
-import tempfile
 from langcodes import standardize_tag
 
 from urllib.parse import quote
@@ -10,7 +12,6 @@ from telegram.ext.dispatcher import run_async
 
 from google.cloud import texttospeech
 
-import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-w", action="store_true", default=None)
@@ -18,15 +19,22 @@ parser.add_argument("-m", action="store_true", default=None)
 parser.add_argument("-l", default="pt-BR")
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "api_key.json"
-CHAR_LIMIT = 800  # GCP TTS char limit
+GCP_TTS_CHAR_LIMIT = 22
 
 # Select the type of audio file
-audio_config = texttospeech.types.AudioConfig(
-    audio_encoding=texttospeech.enums.AudioEncoding.LINEAR16
+audio_config = texttospeech.AudioConfig(
+    audio_encoding=texttospeech.AudioEncoding.LINEAR16
 )
 
 # Instantiate Google TTS client
 client = texttospeech.TextToSpeechClient()
+
+
+class SsmlVoiceGender(Enum):
+    SSML_VOICE_GENDER_UNSPECIFIED = 0
+    MALE = 1
+    FEMALE = 2
+    NEUTRAL = 3
 
 
 def help():
@@ -41,13 +49,13 @@ def help():
     )
 
 
-def generate_audio(sentence, language, gender=None):
+def wavenet_speak(update, context, sentence, language, gender=None):
     # Set the text input to be synthesized
-    synthesis_input = texttospeech.types.SynthesisInput(text=sentence)
+    synthesis_input = texttospeech.SynthesisInput(text=sentence)
 
-    if not gender:
-        gender = "SSML_VOICE_GENDER_UNSPECIFIED"
-    elif "w" in gender:
+    # if not gender:
+    #     gender = "SSML_VOICE_GENDER_UNSPECIFIED"
+    if gender and "w" in gender:
         gender = "FEMALE"
     else:
         gender = "MALE"
@@ -55,23 +63,41 @@ def generate_audio(sentence, language, gender=None):
     # Get available voices
     voices = client.list_voices()
     BCP47lang = standardize_tag(language)
+
     selectedVoices = [
         voice.name
         for voice in voices.voices
-        if (BCP47lang in voice.language_codes and "Standard" not in voice.name)
+        if (
+            str(voice.ssml_gender) == str(SsmlVoiceGender[gender])
+            and BCP47lang in voice.language_codes
+            and "Standard" not in voice.name
+        )
     ]
-    selectedVoice = random.choice(selectedVoices)
+
+    try:
+        selectedVoice = random.choice(selectedVoices)
+    except Exception as e:
+        update.message.reply_text(
+            text="Falha ao criar mensagem de voz com WaveNet.",
+            reply_to_message_id=update.message.message_id,
+        )
+        print(e)
+        print("Defaulting to standard TTS...")
+        return original_speak(update, context)
+
 
     # Build the voice request, select the language code and the ssml
-    voice = texttospeech.types.VoiceSelectionParams(
+    voice = texttospeech.VoiceSelectionParams(
         name=selectedVoice,
         language_code=selectedVoice[:5],  # BCP-47 tag
-        ssml_gender=getattr(texttospeech.enums.SsmlVoiceGender, gender)
+        # ssml_gender=getattr(texttospeech.SsmlVoiceGender, gender)  # Apparently redundant
     )
 
     # Perform the text-to-speech request on the text input with the selected
     # voice parameters and audio file type
-    response = client.synthesize_speech(synthesis_input, voice, audio_config)
+    response = client.synthesize_speech(
+        request={"input": synthesis_input, "voice": voice, "audio_config": audio_config}
+    )
 
     return response
 
@@ -167,18 +193,27 @@ def speak(update, context):
         return
 
     try:
-        wavenetResponse = generate_audio(textToSpeech[:CHAR_LIMIT], lang, gender)
+        if len(textToSpeech.strip()) <= GCP_TTS_CHAR_LIMIT:
+            wavenetResponse = wavenet_speak(update, context, textToSpeech.strip()[:GCP_TTS_CHAR_LIMIT], lang, gender)
+        else:
+            raise ValueError(f"String is longer than {GCP_TTS_CHAR_LIMIT}.")
+
+        try:
+            update.message.reply_voice(
+                voice=wavenetResponse.audio_content, reply_to_message_id=replyID
+            )
+        except Exception as e:
+            update.message.reply_text(
+                text="Falha ao criar mensagem de voz com WaveNet.",
+                reply_to_message_id=update.message.message_id,
+            )
+            print(e)
+            return original_speak(update, context)
+
     except Exception as e:
         update.message.reply_text(
-            text="Falha ao criar mensagem de voz.",
+            text="Falha ao criar mensagem de voz com WaveNet.",
             reply_to_message_id=update.message.message_id,
         )
-        # print(e)
-        return original_speak(update, context)
-
-    try:
-        update.message.reply_voice(voice=wavenetResponse.audio_content, reply_to_message_id=replyID)
-    except Exception as e:
-        update.message.reply_text(text="Falha ao criar mensagem de voz.")
-        # print(e)
+        print(e)
         return original_speak(update, context)
