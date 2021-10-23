@@ -84,7 +84,7 @@ def wavenet_speak(update, context, sentence, language, gender=None):
         speakLogger.debug("Falha ao criar mensagem de voz com WaveNet."),
         speakLogger.warning(e)
         speakLogger.debug("Defaulting to standard TTS...")
-        return original_speak(update, context)
+        return
 
 
     # Build the voice request, select the language code and the ssml
@@ -103,36 +103,37 @@ def wavenet_speak(update, context, sentence, language, gender=None):
     return response
 
 
-@run_async
-def original_speak(update, context):
+def send_original_speak(update, context):
     # Default is pt-br
     engine = "3"
     lang = "6"  # Portuguese
     voice = "2"  # Rafael
 
+    argsLang = "pt-BR"
+
     args = context.args
-    if not args and update.message.reply_to_message:
-        args = update.message.reply_to_message.text.split(" ")
+    args, unknownArgs = parser.parse_known_args(args)
+    argsLang = args.l
 
-    if "-en" in args:
-        engine = "4"
-        voice = "5"  # Daniel
-        lang = "1"  # English
-        args.pop(args.index("-en"))
+    replyID = update.message.message_id
+    if update.message.reply_to_message:
+        text_to_speech = update.message.reply_to_message.text
+        replyID = update.message.reply_to_message.message_id
+    else:
+        text_to_speech = " ".join(unknownArgs)
 
-    if "-pt" in args:
-        args.pop(args.index("-pt"))
-
-    if "-w" in args:
-        if "-en" in args:
+    if args.w:
+        if "en" in argsLang:
             engine = "3"
             voice = "6"  # Ashley
         else:
             engine = "3"
             voice = "1"  # Helena
-        args.pop(args.index("-w"))
-
-    text_to_speech = " ".join(args)
+    else:
+        if "en" in argsLang:
+            engine = "4"
+            voice = "5"  # Daniel
+            lang = "1"  # English
 
     if not text_to_speech:
         update.message.reply_text(
@@ -200,15 +201,14 @@ def speak(update, context):
             raise ValueError(f"String is longer than {GCP_TTS_CHAR_LIMIT}.")
 
         try:
-            update.message.reply_voice(
+            return update.message.reply_voice(
                 voice=wavenetResponse.audio_content, reply_to_message_id=replyID
             )
         except Exception as e:
             speakLogger.debug("Falha ao criar mensagem de voz com WaveNet."),
             speakLogger.warning(e)
-            return original_speak(update, context)
-
+            return send_original_speak(update, context)
     except Exception as e:
         speakLogger.debug("Falha ao criar mensagem de voz com WaveNet."),
         speakLogger.warning(e)
-        return original_speak(update, context)
+        return send_original_speak(update, context)
