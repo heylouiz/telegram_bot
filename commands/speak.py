@@ -124,10 +124,9 @@ def send_original_speak(update, context):
 
     if args.w:
         if "en" in argsLang:
-            engine = "3"
             voice = "6"  # Ashley
+            lang = "1"  # English
         else:
-            engine = "3"
             voice = "1"  # Helena
     else:
         if "en" in argsLang:
