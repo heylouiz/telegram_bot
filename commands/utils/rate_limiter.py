@@ -31,16 +31,16 @@ def rate_limited(max):
         def rate_limited_function(*args, **kwargs):
             # Time since first and last call, respectively
             elapsed_first = time.perf_counter() - first_time_called[0]
-            elapsed = time.perf_counter() - last_time_called[0]
+            elapsed_last = time.perf_counter() - last_time_called[0]
 
             global used_chars
 
-            rate_limit_logger.warning(f"{used_chars}, {round(elapsed_first, 1)}, {round(elapsed, 1)}, {round(time.perf_counter(), 1)}, {round(last_time_called[0], 1)}")
+            rate_limit_logger.warning(f"{used_chars}, {round(elapsed_first, 1)}, {round(elapsed_last, 1)}, {round(time.perf_counter(), 1)}, {round(last_time_called[0], 1)}")
 
             # If char limit was exceeded within the time limit, stop
             if used_chars > GCP_TTS_CHAR_LIMIT and elapsed_first < RATE_LIMIT:
                 rate_limit_logger.warning(f'Char limit exceeded within the time limit (used: {used_chars} under {round(elapsed_first, 2)} seconds, max: {GCP_TTS_CHAR_LIMIT} under {RATE_LIMIT} seconds).')
-                return
+                raise ValueError(f"Char limit exceeded within the time limit.")
             else:
                 if elapsed_first >= RATE_LIMIT:  # The time limit has expired,
                     # Reset counters
@@ -51,10 +51,11 @@ def rate_limited(max):
                 # Update when function was last called
                 last_time_called[0] = time.perf_counter()
 
-                left_to_wait = min_interval - elapsed
+                left_to_wait = min_interval - elapsed_last
                 # Too many calls for the given max number of calls per second
                 if left_to_wait > 0:
                     rate_limit_logger.warning(f'Rate limit ({max}) exceeded.')
+                    raise ValueError(f"Rate limit ({max}) exceeded.")
                     return
                 else:
                     # All rate limits have been satisfied, proceed
@@ -75,5 +76,9 @@ def print_num(num):
 
 print("send print requests to decorated function")
 for i in range(1, 100):
-    print_num(i)
-    used_chars += i
+    try:
+        print_num(i)
+    except ValueError as e:
+        print(e)
+    else:
+        used_chars += i
