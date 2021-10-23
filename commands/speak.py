@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+
+import logging
 import os
 import random
 import argparse
@@ -6,11 +8,12 @@ from enum import Enum
 
 import requests
 from langcodes import standardize_tag
-
 from urllib.parse import quote
 from telegram.ext.dispatcher import run_async
-
 from google.cloud import texttospeech
+
+speakLogger = logging.getLogger(__name__)
+speakLogger.setLevel(logging.DEBUG)
 
 
 parser = argparse.ArgumentParser()
@@ -21,13 +24,14 @@ parser.add_argument("-l", default="pt-BR")
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "api_key.json"
 GCP_TTS_CHAR_LIMIT = 22
 
+
+# Instantiate Google TTS client
+client = texttospeech.TextToSpeechClient()
+
 # Select the type of audio file
 audio_config = texttospeech.AudioConfig(
     audio_encoding=texttospeech.AudioEncoding.LINEAR16
 )
-
-# Instantiate Google TTS client
-client = texttospeech.TextToSpeechClient()
 
 
 class SsmlVoiceGender(Enum):
@@ -77,12 +81,9 @@ def wavenet_speak(update, context, sentence, language, gender=None):
     try:
         selectedVoice = random.choice(selectedVoices)
     except Exception as e:
-        update.message.reply_text(
-            text="Falha ao criar mensagem de voz com WaveNet.",
-            reply_to_message_id=update.message.message_id,
-        )
-        print(e)
-        print("Defaulting to standard TTS...")
+        speakLogger.debug("Falha ao criar mensagem de voz com WaveNet."),
+        speakLogger.warning(e)
+        speakLogger.debug("Defaulting to standard TTS...")
         return original_speak(update, context)
 
 
@@ -134,8 +135,9 @@ def original_speak(update, context):
     text_to_speech = " ".join(args)
 
     if not text_to_speech:
-        update.message.reply_text('Nada pra falar, coloque a frase a ser'
-                                  ' falada na frente do comando "/speak cachorro quente"')
+        update.message.reply_text(
+            'Nada a se falar, coloque a frase a ser falada após o comando, ex.: "/speak cachorro quente"'
+        )
         return
 
     # Make speech url
@@ -187,8 +189,7 @@ def speak(update, context):
 
     if not textToSpeech:
         update.message.reply_text(
-            "Nada pra falar, coloque a frase a ser"
-            ' falada na frente do comando, ex.: "/speak cachorro quente"'
+            'Nada a se falar, coloque a frase a ser falada após o comando, ex.: "/speak cachorro quente"'
         )
         return
 
@@ -203,17 +204,11 @@ def speak(update, context):
                 voice=wavenetResponse.audio_content, reply_to_message_id=replyID
             )
         except Exception as e:
-            update.message.reply_text(
-                text="Falha ao criar mensagem de voz com WaveNet.",
-                reply_to_message_id=update.message.message_id,
-            )
-            print(e)
+            speakLogger.debug("Falha ao criar mensagem de voz com WaveNet."),
+            speakLogger.warning(e)
             return original_speak(update, context)
 
     except Exception as e:
-        update.message.reply_text(
-            text="Falha ao criar mensagem de voz com WaveNet.",
-            reply_to_message_id=update.message.message_id,
-        )
-        print(e)
+        speakLogger.debug("Falha ao criar mensagem de voz com WaveNet."),
+        speakLogger.warning(e)
         return original_speak(update, context)
