@@ -12,13 +12,14 @@ from urllib.parse import quote
 from telegram.ext.dispatcher import run_async
 from google.cloud import texttospeech
 
-speakLogger = logging.getLogger(__name__)
-speakLogger.setLevel(logging.DEBUG)
+speak_logger = logging.getLogger(__name__)
+speak_logger.setLevel(logging.DEBUG)
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-w", action="store_true", default=None)
 parser.add_argument("-m", action="store_true", default=None)
+parser.add_argument("-en", action="store_true", default=None)
 parser.add_argument("-l", default="pt-BR")
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "api_key.json"
@@ -66,14 +67,14 @@ def wavenet_speak(update, context, sentence, language, gender=None):
 
     # Get available voices
     voices = client.list_voices()
-    BCP47lang = standardize_tag(language)
+    bcp47_lang = standardize_tag(language)
 
     selectedVoices = [
         voice.name
         for voice in voices.voices
         if (
             str(voice.ssml_gender) == str(SsmlVoiceGender[gender])
-            and BCP47lang in voice.language_codes
+            and bcp47_lang in voice.language_codes
             and "Standard" not in voice.name
         )
     ]
@@ -81,9 +82,9 @@ def wavenet_speak(update, context, sentence, language, gender=None):
     try:
         selectedVoice = random.choice(selectedVoices)
     except Exception as e:
-        speakLogger.debug("Falha ao criar mensagem de voz com WaveNet."),
-        speakLogger.warning(e)
-        speakLogger.debug("Defaulting to standard TTS...")
+        speak_logger.debug("Falha ao criar mensagem de voz com WaveNet."),
+        speak_logger.warning(e)
+        speak_logger.debug("Defaulting to standard TTS...")
         return
 
 
@@ -109,27 +110,27 @@ def send_original_speak(update, context):
     lang = "6"  # Portuguese
     voice = "2"  # Rafael
 
-    argsLang = "pt-BR"
+    args_lang = "pt-BR"
 
     args = context.args
-    args, unknownArgs = parser.parse_known_args(args)
-    argsLang = args.l
+    args, unknown_args = parser.parse_known_args(args)
+    args_lang = args.l
 
-    replyID = update.message.message_id
+    reply_id = update.message.message_id
     if update.message.reply_to_message:
         text_to_speech = update.message.reply_to_message.text
-        replyID = update.message.reply_to_message.message_id
+        reply_id = update.message.reply_to_message.message_id
     else:
-        text_to_speech = " ".join(unknownArgs)
+        text_to_speech = " ".join(unknown_args)
 
     if args.w:
-        if "en" in argsLang:
+        if args.en:
             voice = "6"  # Ashley
             lang = "1"  # English
         else:
             voice = "1"  # Helena
     else:
-        if "en" in argsLang:
+        if args.en:
             engine = "4"
             voice = "5"  # Daniel
             lang = "1"  # English
@@ -173,8 +174,8 @@ def speak(update, context):
 
     args = context.args
 
-    args, unknownArgs = parser.parse_known_args(args)
-    textToSpeech = " ".join(unknownArgs)
+    args, unknown_args = parser.parse_known_args(args)
+    text_to_speech = " ".join(unknown_args)
 
     lang = args.l
     if args.w:
@@ -182,32 +183,32 @@ def speak(update, context):
     elif args.m:
         gender = "m"
 
-    replyID = update.message.message_id
+    reply_id = update.message.message_id
     if update.message.reply_to_message:
-        textToSpeech = update.message.reply_to_message.text
-        replyID = update.message.reply_to_message.message_id
+        text_to_speech = update.message.reply_to_message.text
+        reply_id = update.message.reply_to_message.message_id
 
-    if not textToSpeech:
+    if not text_to_speech:
         update.message.reply_text(
             'Nada a se falar, coloque a frase a ser falada após o comando, ex.: "/speak cachorro quente"'
         )
         return
 
     try:
-        if len(textToSpeech.strip()) <= GCP_TTS_CHAR_LIMIT:
-            wavenetResponse = wavenet_speak(update, context, textToSpeech.strip()[:GCP_TTS_CHAR_LIMIT], lang, gender)
+        if len(text_to_speech.strip()) <= GCP_TTS_CHAR_LIMIT:
+            wavenet_response = wavenet_speak(update, context, text_to_speech.strip()[:GCP_TTS_CHAR_LIMIT], lang, gender)
         else:
             raise ValueError(f"String is longer than {GCP_TTS_CHAR_LIMIT}.")
 
         try:
             return update.message.reply_voice(
-                voice=wavenetResponse.audio_content, reply_to_message_id=replyID
+                voice=wavenet_response.audio_content, reply_to_message_id=reply_id
             )
         except Exception as e:
-            speakLogger.debug("Falha ao criar mensagem de voz com WaveNet."),
-            speakLogger.warning(e)
+            speak_logger.debug("Falha ao criar mensagem de voz com WaveNet."),
+            speak_logger.warning(e)
             return send_original_speak(update, context)
     except Exception as e:
-        speakLogger.debug("Falha ao criar mensagem de voz com WaveNet."),
-        speakLogger.warning(e)
+        speak_logger.debug("Falha ao criar mensagem de voz com WaveNet."),
+        speak_logger.warning(e)
         return send_original_speak(update, context)
