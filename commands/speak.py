@@ -60,9 +60,11 @@ def wavenet_speak(update, context, sentence, language, gender=None):
     # Set the text input to be synthesized
     synthesis_input = texttospeech.SynthesisInput(text=sentence)
 
-    # if not gender:
-    #     gender = "SSML_VOICE_GENDER_UNSPECIFIED"
-    if gender and "w" in gender:
+    anyGender = False
+    if not gender:
+        gender = "SSML_VOICE_GENDER_UNSPECIFIED"
+        anyGender = True
+    if gender == "w":
         gender = "FEMALE"
     else:
         gender = "MALE"
@@ -75,7 +77,7 @@ def wavenet_speak(update, context, sentence, language, gender=None):
         voice.name
         for voice in voices.voices
         if (
-            str(voice.ssml_gender) == str(SsmlVoiceGender[gender])
+            (anyGender or str(voice.ssml_gender) == str(SsmlVoiceGender[gender]))
             and bcp47_lang in voice.language_codes
             and "Standard" not in voice.name
         )
