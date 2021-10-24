@@ -12,6 +12,8 @@ from urllib.parse import quote
 from telegram.ext.dispatcher import run_async
 from google.cloud import texttospeech
 
+import commands.utils.rate_limiter as rl
+
 speak_logger = logging.getLogger(__name__)
 speak_logger.setLevel(logging.DEBUG)
 
@@ -23,7 +25,6 @@ parser.add_argument("-en", action="store_true", default=None)
 parser.add_argument("-l", default="pt-BR")
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "api_key.json"
-GCP_TTS_CHAR_LIMIT = 22
 
 
 # Instantiate Google TTS client
@@ -54,6 +55,7 @@ def help():
     )
 
 
+@rl.rate_limited(5)
 def wavenet_speak(update, context, sentence, language, gender=None):
     # Set the text input to be synthesized
     synthesis_input = texttospeech.SynthesisInput(text=sentence)
@@ -195,13 +197,16 @@ def speak(update, context):
         return
 
     try:
-        if len(text_to_speech.strip()) <= GCP_TTS_CHAR_LIMIT:
-            wavenet_response = wavenet_speak(update, context, text_to_speech.strip()[:GCP_TTS_CHAR_LIMIT], lang, gender)
+        text_to_speech = text_to_speech.strip()
+        if len(text_to_speech) <= rl.GCP_TTS_CHAR_LIMIT:
+            # Increment before generating as a safeguard
+            rl.used_chars += len(text_to_speech)
+            wavenet_response = wavenet_speak(update, context, text_to_speech[:rl.GCP_TTS_CHAR_LIMIT], lang, gender)
         else:
-            raise ValueError(f"String is longer than {GCP_TTS_CHAR_LIMIT}.")
+            raise ValueError(f"String is longer than {rl.GCP_TTS_CHAR_LIMIT}.")
 
         try:
-            return update.message.reply_voice(
+            update.message.reply_voice(
                 voice=wavenet_response.audio_content, reply_to_message_id=reply_id
             )
         except Exception as e:
