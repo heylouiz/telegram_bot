@@ -35,7 +35,7 @@ def rate_limited(max):
 
             global used_chars
 
-            rate_limit_logger.debug(f"{used_chars}, {round(elapsed_first, 1)}, {round(elapsed_last, 1)}, {round(time.perf_counter(), 1)}, {round(last_time_called[0], 1)}")
+            rate_limit_logger.debug(f"{used_chars}, {round(elapsed_first, 1)}, {round(elapsed_last, 1)}, {round(last_time_called[0], 1)}")
 
             # If char limit was exceeded within the time limit, stop
             if used_chars > GCP_TTS_CHAR_LIMIT and elapsed_first < RATE_LIMIT_TIMEFRAME:
