@@ -23,18 +23,19 @@ logger = logging.getLogger(__name__)
 
 START_MESSAGE = 'Oi, eu sou o Quebot!\nDigite /help para ver a lista de comandos.\nCriador: @heylouiz'
 
-HELP_MESSAGE = ('/doge    - Manda um meme do doge com frases customizadas.\n'
-                '- Usage: /doge frase1, frase2, frase3...\n'
+HELP_MESSAGE = ('/doge - Manda um meme do doge com frases customizadas.\n'
+                '   - Uso: /doge frase1, frase2, frase3...\n'
                 '/image - Busca e manda uma imagem aleatória.\n'
-                '- Uso: /image frase\n'
-                '/choose  - Escolhe uma das opções disponíveis\n'
-                '- Uso: /choose sim, não\n'
-                '/speak - Manda uma mensagem de voz com o texto.\n'
-                '- Usage: /speak texto\n'
-                'Para falar em inglês utilizar o parâmetro "-en". Uso: /speak -en text in english.'
-                ' Para usar uma voz feminina utilize o parâmetro "-w". Uso: /speak -w texto.\n'
-                '/fortune - Manda um "pensamento".\n'
-                '- Uso: /fortune [-pt pra mandar frases em português]')
+                '   - Uso: /image frase\n'
+                '/choose - Escolhe uma das opções disponíveis\n'
+                '   - Uso: /choose sim, não\n'
+                '/speak - Gera uma mensagem de voz para o texto.\n'
+                '   - Uso: /speak texto\n'
+                '   Para falar em inglês, escreva também o parâmetro "`-l`".\n'
+                '       - Uso: `/speak -l en-US text in english`.\n'
+                '   Para usar uma voz feminina, utilize o parâmetro "`-w`".\n'
+                '       - Uso: `/speak -w texto.`\n'
+                '/fortune - Manda um "pensamento."')
 
 
 # Command functions
@@ -45,7 +46,7 @@ def start(update: Update, context: CallbackContext):
 
 def help(update: Update, context: CallbackContext):
     """Send a message when the command /help is issued."""
-    update.message.reply_text(HELP_MESSAGE)
+    update.message.reply_text(HELP_MESSAGE, parse_mode="markdown")
 
 
 def error(update: Update, context: CallbackContext):
