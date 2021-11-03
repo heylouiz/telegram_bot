@@ -35,6 +35,8 @@ audio_config = texttospeech.AudioConfig(
     audio_encoding=texttospeech.AudioEncoding.LINEAR16
 )
 
+BASE_URL = "{}/speak".format(os.environ['API_SERVER'])
+
 
 class SsmlVoiceGender(Enum):
     SSML_VOICE_GENDER_UNSPECIFIED = 0
@@ -73,6 +75,7 @@ def wavenet_speak(update, context, sentence, language, gender=None):
     voices = client.list_voices()
     bcp47_lang = standardize_tag(language)
 
+    # Select WaveNet voices in the given language and gender
     selectedVoices = [
         voice.name
         for voice in voices.voices

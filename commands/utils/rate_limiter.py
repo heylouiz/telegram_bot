@@ -9,7 +9,7 @@ rate_limit_logger = logging.getLogger(__name__)
 rate_limit_logger.setLevel(logging.DEBUG)
 
 
-GCP_TTS_FREE_QUOTA = 1000000
+GCP_TTS_FREE_QUOTA = 1000000  # 1000000 characters/month
 GCP_TTS_CHAR_LIMIT = math.floor(GCP_TTS_FREE_QUOTA / 31 / 24) - 1  # Max chars per hour
 RATE_LIMIT_TIMEFRAME = 60 * 60  # 1 hour
 used_chars = 0
